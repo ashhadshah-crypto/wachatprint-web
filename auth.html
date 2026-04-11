@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WAChatPrint - Auth</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #0f172a;
+    }
+    .card {
+      width: 100%;
+      max-width: 430px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+      padding: 30px;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    p.sub {
+      text-align: center;
+      color: #64748b;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-size: 15px;
+    }
+    button {
+      width: 100%;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: #1d4ed8; }
+    .link-row {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .link-row a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .message {
+      margin-top: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .success { color: #15803d; }
+    .error { color: #dc2626; }
+    .back {
+      display: block;
+      margin-top: 16px;
+      text-align: center;
+      font-size: 14px;
+      text-decoration: none;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 id="pageTitle">Create Account</h1>
+    <p class="sub" id="pageSub">Sign up to access WAChatPrint.</p>
+
+    <form id="authForm">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Enter your email" required />
+
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter your password" required />
+
+      <button type="submit" id="submitBtn">Create Account</button>
+    </form>
+
+    <div id="message" class="message"></div>
+
+    <div class="link-row" id="switchLink"></div>
+
+    <a class="back" href="/">← Back to home</a>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'PASTE_YOUR_SUPABASE_PROJECT_URL_HERE';
+    const supabaseKey = 'PASTE_YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY_HERE';
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode') === 'login' ? 'login' : 'signup';
+
+    const pageTitle = document.getElementById('pageTitle');
+    const pageSub = document.getElementById('pageSub');
+    const submitBtn = document.getElementById('submitBtn');
+    const switchLink = document.getElementById('switchLink');
+    const form = document.getElementById('authForm');
+    const message = document.getElementById('message');
+
+    if (mode === 'login') {
+      pageTitle.textContent = 'Login';
+      pageSub.textContent = 'Login to your WAChatPrint account.';
+      submitBtn.textContent = 'Login';
+      switchLink.innerHTML = `Don’t have an account? <a href="/auth.html?mode=signup">Create one</a>`;
+    } else {
+      pageTitle.textContent = 'Create Account';
+      pageSub.textContent = 'Sign up to access WAChatPrint.';
+      submitBtn.textContent = 'Create Account';
+      switchLink.innerHTML = `Already have an account? <a href="/auth.html?mode=login">Login</a>`;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      message.textContent = '';
+      message.className = 'message';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        if (mode === 'signup') {
+          const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/dashboard.html`
+            }
+          });
+
+          if (error) throw error;
+
+          message.textContent = 'Account created. Please check your email and click the confirmation link.';
+          message.classList.add('success');
+        } else {
+          const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+
+          if (error) throw error;
+
+          window.location.href = '/dashboard.html';
+        }
+      } catch (err) {
+        message.textContent = err.message || 'Something went wrong.';
+        message.classList.add('error');
+      }
+    });
+  </script>
+</body>
+</html>
