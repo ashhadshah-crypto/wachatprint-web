@@ -4,46 +4,235 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WAChatPrint</title>
+  <meta name="description" content="Convert exported WhatsApp chats into clean PDF files." />
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      color: #111;
+      background: linear-gradient(135deg, #f7f9fc, #eef3ff);
+      color: #111827;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .email-link {
+      text-decoration: none;
+      color: #2563eb;
+      font-size: 14px;
+    }
+
+    .hero {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      margin: 0;
+      padding: 60px 0;
     }
-    .box {
-      background: white;
-      padding: 40px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+
+    .hero-box {
+      background: #ffffff;
+      border-radius: 22px;
+      box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+      padding: 48px 32px;
       text-align: center;
-      max-width: 600px;
+      max-width: 760px;
+      width: 100%;
     }
+
+    .badge {
+      display: inline-block;
+      background: #e0ecff;
+      color: #1d4ed8;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+
     h1 {
-      margin: 0 0 10px;
-      font-size: 36px;
+      font-size: 42px;
+      line-height: 1.15;
+      margin-bottom: 18px;
+      color: #0f172a;
     }
-    p {
+
+    .subtitle {
       font-size: 18px;
-      color: #444;
-      line-height: 1.6;
+      line-height: 1.7;
+      color: #475569;
+      max-width: 620px;
+      margin: 0 auto 28px;
     }
-    .small {
+
+    .actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: 0.2s ease;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .info {
       margin-top: 20px;
       font-size: 14px;
-      color: #777;
+      color: #64748b;
+      line-height: 1.7;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-top: 34px;
+      text-align: left;
+    }
+
+    .feature {
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 18px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .feature h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #0f172a;
+    }
+
+    .feature p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #475569;
+    }
+
+    footer {
+      text-align: center;
+      padding: 18px 24px 28px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 32px;
+      }
+
+      .subtitle {
+        font-size: 16px;
+      }
+
+      .hero-box {
+        padding: 34px 20px;
+      }
+
+      header {
+        flex-direction: column;
+        gap: 10px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>WAChatPrint</h1>
-    <p>Convert exported WhatsApp chats into clean, downloadable PDFs.</p>
-    <p class="small">Website is under setup. Coming soon.</p>
+  <div class="container">
+    <header>
+      <div class="logo">WAChatPrint</div>
+      <a class="email-link" href="mailto:hello@wachatprint.com">hello@wachatprint.com</a>
+    </header>
+
+    <section class="hero">
+      <div class="hero-box">
+        <div class="badge">Coming Soon</div>
+        <h1>Convert exported WhatsApp chats into clean PDF files</h1>
+        <p class="subtitle">
+          Upload your exported chat and get a structured, printable PDF in minutes.
+          WAChatPrint is being built to make chat exports simple, professional, and easy to share.
+        </p>
+
+        <div class="actions">
+          <a class="btn btn-primary" href="mailto:hello@wachatprint.com?subject=I%20want%20early%20access%20to%20WAChatPrint">Request Early Access</a>
+          <a class="btn btn-secondary" href="mailto:support@wachatprint.com">Contact Support</a>
+        </div>
+
+        <div class="features">
+          <div class="feature">
+            <h3>Simple upload</h3>
+            <p>Upload exported WhatsApp chat files and convert them into a neat PDF layout.</p>
+          </div>
+          <div class="feature">
+            <h3>Clean formatting</h3>
+            <p>Turn messy chat exports into readable, printable, and shareable documents.</p>
+          </div>
+          <div class="feature">
+            <h3>Built for business</h3>
+            <p>Useful for records, archives, reporting, and professional sharing.</p>
+          </div>
+        </div>
+
+        <p class="info">
+          Not affiliated with WhatsApp or Meta.
+        </p>
+      </div>
+    </section>
   </div>
+
+  <footer>
+    © 2026 WAChatPrint. All rights reserved.
+  </footer>
 </body>
 </html>
