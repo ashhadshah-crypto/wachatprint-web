@@ -193,8 +193,6 @@
 
     const supabaseUrl = 'https://owlzekmxjuaqxyqbssit.supabase.co';
     const supabaseKey = 'sb_publishable_GjhNJ7BAtIG4Rk9qvGFk3w_7hVgqDJF';
-
-    // IMPORTANT: replace this with your real Railway URL
     const RAILWAY_API_BASE = 'https://web-production-4854d.up.railway.app';
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -301,7 +299,7 @@
         return;
       }
 
-      if (!RAILWAY_API_BASE || RAILWAY_API_BASE === 'https://web-production-4854d.up.railway.app') {
+      if (!RAILWAY_API_BASE) {
         uploadMessage.textContent = 'Railway API URL is missing in dashboard.html.';
         uploadMessage.className = 'message error';
         return;
