@@ -15,10 +15,7 @@
       padding: 24px;
     }
 
-    .wrap {
-      max-width: 960px;
-      margin: 0 auto;
-    }
+    .wrap { max-width: 960px; margin: 0 auto; }
 
     .topbar {
       display: flex;
@@ -29,10 +26,7 @@
       gap: 12px;
     }
 
-    .logo {
-      font-size: 24px;
-      font-weight: 700;
-    }
+    .logo { font-size: 24px; font-weight: 700; }
 
     .btn {
       border: none;
@@ -44,18 +38,14 @@
       font-weight: 600;
     }
 
-    .btn:hover {
-      background: #1d4ed8;
-    }
+    .btn:hover { background: #1d4ed8; }
 
     .btn-secondary {
       background: #e2e8f0;
       color: #0f172a;
     }
 
-    .btn-secondary:hover {
-      background: #cbd5e1;
-    }
+    .btn-secondary:hover { background: #cbd5e1; }
 
     .card {
       background: white;
@@ -65,15 +55,8 @@
       margin-bottom: 20px;
     }
 
-    h1 {
-      font-size: 30px;
-      margin-bottom: 10px;
-    }
-
-    h2 {
-      font-size: 22px;
-      margin-bottom: 12px;
-    }
+    h1 { font-size: 30px; margin-bottom: 10px; }
+    h2 { font-size: 22px; margin-bottom: 12px; }
 
     p {
       color: #475569;
@@ -154,7 +137,7 @@
     <div class="card">
       <h2>Upload WhatsApp Export</h2>
       <p>
-        Upload your exported WhatsApp chat file. For now, free users can upload
+        Upload your exported WhatsApp chat file. Free users can upload
         files up to 5 MB in <strong>.zip</strong> or <strong>.txt</strong> format.
       </p>
 
@@ -170,7 +153,8 @@
         <div class="file-info" id="fileInfo"></div>
 
         <div class="actions">
-          <button class="btn" id="checkBtn">Validate File</button>
+          <button class="btn" id="checkBtn" type="button">Validate File</button>
+          <button class="btn" id="uploadBtn" type="button">Upload File</button>
           <button class="btn btn-secondary" id="clearBtn" type="button">Clear</button>
         </div>
 
@@ -195,10 +179,14 @@
     const fileInfo = document.getElementById('fileInfo');
     const uploadMessage = document.getElementById('uploadMessage');
     const checkBtn = document.getElementById('checkBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
     const clearBtn = document.getElementById('clearBtn');
 
-    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+    const MAX_SIZE = 5 * 1024 * 1024;
     const ALLOWED_EXTENSIONS = ['zip', 'txt'];
+
+    let currentUser = null;
+    let validatedFile = null;
 
     async function loadUser() {
       const { data, error } = await supabase.auth.getUser();
@@ -208,6 +196,7 @@
         return;
       }
 
+      currentUser = data.user;
       userEmail.textContent = `Logged in as: ${data.user.email}`;
     }
 
@@ -218,6 +207,7 @@
     }
 
     function resetFileView() {
+      validatedFile = null;
       chatFile.value = '';
       fileInfo.style.display = 'none';
       fileInfo.innerHTML = '';
@@ -225,14 +215,20 @@
       uploadMessage.className = 'message muted';
     }
 
+    function getSelectedFile() {
+      return chatFile.files[0] || null;
+    }
+
     function validateSelectedFile() {
-      const file = chatFile.files[0];
+      const file = getSelectedFile();
+
+      validatedFile = null;
 
       if (!file) {
         uploadMessage.textContent = 'Please select a file first.';
         uploadMessage.className = 'message error';
         fileInfo.style.display = 'none';
-        return;
+        return false;
       }
 
       const fileName = file.name;
@@ -242,7 +238,7 @@
         uploadMessage.textContent = 'Invalid file type. Please upload only .zip or .txt files.';
         uploadMessage.className = 'message error';
         fileInfo.style.display = 'none';
-        return;
+        return false;
       }
 
       if (file.size > MAX_SIZE) {
@@ -254,19 +250,64 @@
           <strong>Size:</strong> ${formatFileSize(file.size)}<br>
           <strong>Status:</strong> Over free limit
         `;
-        return;
+        return false;
       }
+
+      validatedFile = file;
 
       fileInfo.style.display = 'block';
       fileInfo.innerHTML = `
         <strong>Selected File:</strong> ${file.name}<br>
         <strong>Type:</strong> .${extension}<br>
         <strong>Size:</strong> ${formatFileSize(file.size)}<br>
-        <strong>Status:</strong> Valid for free upload
+        <strong>Status:</strong> Valid for upload
       `;
 
-      uploadMessage.textContent = 'File looks good. Backend upload will be connected next.';
+      uploadMessage.textContent = 'File looks good. You can upload it now.';
       uploadMessage.className = 'message success';
+      return true;
+    }
+
+    function safeFileName(name) {
+      return name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    }
+
+    async function uploadFile() {
+      if (!currentUser) {
+        uploadMessage.textContent = 'Please log in again.';
+        uploadMessage.className = 'message error';
+        return;
+      }
+
+      const ok = validateSelectedFile();
+      if (!ok || !validatedFile) return;
+
+      const originalName = safeFileName(validatedFile.name);
+      const filePath = `${currentUser.id}/${Date.now()}-${originalName}`;
+
+      uploadMessage.textContent = 'Uploading file...';
+      uploadMessage.className = 'message muted';
+
+      const { data, error } = await supabase
+        .storage
+        .from('uploads')
+        .upload(filePath, validatedFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: validatedFile.type || 'application/octet-stream'
+        });
+
+      if (error) {
+        uploadMessage.textContent = `Upload failed: ${error.message}`;
+        uploadMessage.className = 'message error';
+        return;
+      }
+
+      uploadMessage.textContent = 'Upload successful. Next we will connect PDF processing.';
+      uploadMessage.className = 'message success';
+
+      fileInfo.style.display = 'block';
+      fileInfo.innerHTML += `<br><strong>Stored Path:</strong> ${data.path}`;
     }
 
     logoutBtn.addEventListener('click', async () => {
@@ -275,9 +316,11 @@
     });
 
     checkBtn.addEventListener('click', validateSelectedFile);
+    uploadBtn.addEventListener('click', uploadFile);
     clearBtn.addEventListener('click', resetFileView);
 
     chatFile.addEventListener('change', () => {
+      validatedFile = null;
       uploadMessage.textContent = 'File selected. Click "Validate File".';
       uploadMessage.className = 'message muted';
     });
