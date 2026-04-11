@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WAChatPrint - Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .btn {
+      border: none;
+      background: #2563eb;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn:hover {
+      background: #1d4ed8;
+    }
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #475569;
+      line-height: 1.6;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 15px;
+      color: #15803d;
+      font-weight: 600;
+    }
+    .placeholder {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="logo">WAChatPrint</div>
+      <button class="btn" id="logoutBtn">Logout</button>
+    </div>
+
+    <div class="card">
+      <h1>Welcome</h1>
+      <p id="userEmail">Checking your session...</p>
+      <div class="status">You are inside the first dashboard.</div>
+    </div>
+
+    <div class="card">
+      <h1>Next step</h1>
+      <p>This is where your upload box will come next.</p>
+      <div class="placeholder">
+        Upload ZIP/TXT feature will be added here.
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'https://owlzekmxjuaqxyqbssit.supabase.co';
+    const supabaseKey = 'sb_publishable_GjhNJ7BAtIG4Rk9qvGFk3w_7hVgqDJF';
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const userEmail = document.getElementById('userEmail');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    async function loadUser() {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error || !data.user) {
+        window.location.href = '/auth.html?mode=login';
+        return;
+      }
+
+      userEmail.textContent = `Logged in as: ${data.user.email}`;
+    }
+
+    logoutBtn.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    });
+
+    loadUser();
+  </script>
+</body>
+</html>
