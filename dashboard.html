@@ -15,7 +15,10 @@
       padding: 24px;
     }
 
-    .wrap { max-width: 960px; margin: 0 auto; }
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+    }
 
     .topbar {
       display: flex;
@@ -26,7 +29,10 @@
       gap: 12px;
     }
 
-    .logo { font-size: 24px; font-weight: 700; }
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+    }
 
     .btn {
       border: none;
@@ -38,14 +44,23 @@
       font-weight: 600;
     }
 
-    .btn:hover { background: #1d4ed8; }
+    .btn:hover {
+      background: #1d4ed8;
+    }
+
+    .btn:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
 
     .btn-secondary {
       background: #e2e8f0;
       color: #0f172a;
     }
 
-    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
 
     .card {
       background: white;
@@ -55,8 +70,15 @@
       margin-bottom: 20px;
     }
 
-    h1 { font-size: 30px; margin-bottom: 10px; }
-    h2 { font-size: 22px; margin-bottom: 12px; }
+    h1 {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
 
     p {
       color: #475569;
@@ -135,10 +157,10 @@
     </div>
 
     <div class="card">
-      <h2>Upload WhatsApp Export</h2>
+      <h2>Convert WhatsApp TXT to PDF</h2>
       <p>
-        Upload your exported WhatsApp chat file. Free users can upload
-        files up to 5 MB in <strong>.zip</strong> or <strong>.txt</strong> format.
+        Upload your exported WhatsApp chat file. Right now, direct conversion works for
+        <strong>.txt</strong> files up to <strong>5 MB</strong>. ZIP support will be added next.
       </p>
 
       <div class="upload-box">
@@ -147,6 +169,7 @@
 
         <div class="note">
           Allowed formats: .zip, .txt<br />
+          Current direct conversion: .txt only<br />
           Free size limit: 5 MB
         </div>
 
@@ -154,7 +177,7 @@
 
         <div class="actions">
           <button class="btn" id="checkBtn" type="button">Validate File</button>
-          <button class="btn" id="uploadBtn" type="button">Upload File</button>
+          <button class="btn" id="convertBtn" type="button">Convert to PDF</button>
           <button class="btn btn-secondary" id="clearBtn" type="button">Clear</button>
         </div>
 
@@ -171,6 +194,9 @@
     const supabaseUrl = 'https://owlzekmxjuaqxyqbssit.supabase.co';
     const supabaseKey = 'sb_publishable_GjhNJ7BAtIG4Rk9qvGFk3w_7hVgqDJF';
 
+    // IMPORTANT: replace this with your real Railway URL
+    const RAILWAY_API_BASE = 'https://web-production-4854d.up.railway.app';
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const userEmail = document.getElementById('userEmail');
@@ -179,14 +205,11 @@
     const fileInfo = document.getElementById('fileInfo');
     const uploadMessage = document.getElementById('uploadMessage');
     const checkBtn = document.getElementById('checkBtn');
-    const uploadBtn = document.getElementById('uploadBtn');
+    const convertBtn = document.getElementById('convertBtn');
     const clearBtn = document.getElementById('clearBtn');
 
     const MAX_SIZE = 5 * 1024 * 1024;
     const ALLOWED_EXTENSIONS = ['zip', 'txt'];
-
-    let currentUser = null;
-    let validatedFile = null;
 
     async function loadUser() {
       const { data, error } = await supabase.auth.getUser();
@@ -196,7 +219,6 @@
         return;
       }
 
-      currentUser = data.user;
       userEmail.textContent = `Logged in as: ${data.user.email}`;
     }
 
@@ -207,7 +229,6 @@
     }
 
     function resetFileView() {
-      validatedFile = null;
       chatFile.value = '';
       fileInfo.style.display = 'none';
       fileInfo.innerHTML = '';
@@ -222,13 +243,11 @@
     function validateSelectedFile() {
       const file = getSelectedFile();
 
-      validatedFile = null;
-
       if (!file) {
         uploadMessage.textContent = 'Please select a file first.';
         uploadMessage.className = 'message error';
         fileInfo.style.display = 'none';
-        return false;
+        return { ok: false };
       }
 
       const fileName = file.name;
@@ -238,7 +257,7 @@
         uploadMessage.textContent = 'Invalid file type. Please upload only .zip or .txt files.';
         uploadMessage.className = 'message error';
         fileInfo.style.display = 'none';
-        return false;
+        return { ok: false };
       }
 
       if (file.size > MAX_SIZE) {
@@ -250,64 +269,87 @@
           <strong>Size:</strong> ${formatFileSize(file.size)}<br>
           <strong>Status:</strong> Over free limit
         `;
-        return false;
+        return { ok: false };
       }
-
-      validatedFile = file;
 
       fileInfo.style.display = 'block';
       fileInfo.innerHTML = `
         <strong>Selected File:</strong> ${file.name}<br>
         <strong>Type:</strong> .${extension}<br>
         <strong>Size:</strong> ${formatFileSize(file.size)}<br>
-        <strong>Status:</strong> Valid for upload
+        <strong>Status:</strong> Valid
       `;
 
-      uploadMessage.textContent = 'File looks good. You can upload it now.';
+      if (extension === 'zip') {
+        uploadMessage.textContent = 'ZIP selected. ZIP conversion will be added next. For now, use TXT.';
+        uploadMessage.className = 'message muted';
+        return { ok: true, extension, file };
+      }
+
+      uploadMessage.textContent = 'TXT file looks good. You can convert it now.';
       uploadMessage.className = 'message success';
-      return true;
+      return { ok: true, extension, file };
     }
 
-    function safeFileName(name) {
-      return name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    }
+    async function convertTxtToPdf() {
+      const result = validateSelectedFile();
+      if (!result.ok) return;
 
-    async function uploadFile() {
-      if (!currentUser) {
-        uploadMessage.textContent = 'Please log in again.';
+      if (result.extension !== 'txt') {
+        uploadMessage.textContent = 'ZIP conversion is not connected yet. Please upload a TXT file for now.';
         uploadMessage.className = 'message error';
         return;
       }
 
-      const ok = validateSelectedFile();
-      if (!ok || !validatedFile) return;
+      if (!RAILWAY_API_BASE || RAILWAY_API_BASE === 'https://web-production-4854d.up.railway.app') {
+        uploadMessage.textContent = 'Railway API URL is missing in dashboard.html.';
+        uploadMessage.className = 'message error';
+        return;
+      }
 
-      const originalName = safeFileName(validatedFile.name);
-      const filePath = `${currentUser.id}/${Date.now()}-${originalName}`;
+      const file = result.file;
+      const formData = new FormData();
+      formData.append('file', file);
 
-      uploadMessage.textContent = 'Uploading file...';
-      uploadMessage.className = 'message muted';
+      try {
+        convertBtn.disabled = true;
+        uploadMessage.textContent = 'Converting file to PDF...';
+        uploadMessage.className = 'message muted';
 
-      const { data, error } = await supabase
-        .storage
-        .from('uploads')
-        .upload(filePath, validatedFile, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: validatedFile.type || 'application/octet-stream'
+        const response = await fetch(`${RAILWAY_API_BASE}/convert-txt`, {
+          method: 'POST',
+          body: formData
         });
 
-      if (error) {
-        uploadMessage.textContent = `Upload failed: ${error.message}`;
+        if (!response.ok) {
+          let errorText = 'Conversion failed.';
+          try {
+            const errorData = await response.json();
+            errorText = errorData.detail || errorText;
+          } catch (_) {}
+          throw new Error(errorText);
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
+        link.href = downloadUrl;
+        link.download = `${baseName}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+
+        uploadMessage.textContent = 'PDF generated successfully. Download started.';
+        uploadMessage.className = 'message success';
+      } catch (err) {
+        uploadMessage.textContent = err.message || 'Something went wrong during conversion.';
         uploadMessage.className = 'message error';
-        return;
+      } finally {
+        convertBtn.disabled = false;
       }
-
-      uploadMessage.textContent = 'Upload successful. Next we will connect PDF processing.';
-      uploadMessage.className = 'message success';
-
-      fileInfo.style.display = 'block';
-      fileInfo.innerHTML += `<br><strong>Stored Path:</strong> ${data.path}`;
     }
 
     logoutBtn.addEventListener('click', async () => {
@@ -316,11 +358,10 @@
     });
 
     checkBtn.addEventListener('click', validateSelectedFile);
-    uploadBtn.addEventListener('click', uploadFile);
+    convertBtn.addEventListener('click', convertTxtToPdf);
     clearBtn.addEventListener('click', resetFileView);
 
     chatFile.addEventListener('change', () => {
-      validatedFile = null;
       uploadMessage.textContent = 'File selected. Click "Validate File".';
       uploadMessage.className = 'message muted';
     });
