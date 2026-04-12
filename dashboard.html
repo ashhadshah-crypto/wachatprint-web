@@ -369,10 +369,31 @@
         });
 
       if (error) {
+        const msg = (error.message || '').toLowerCase();
+
+        if (
+          msg.includes('maximum allowed size') ||
+          msg.includes('object exceeded') ||
+          msg.includes('payload too large') ||
+          msg.includes('entity too large')
+        ) {
+          return {
+            ok: false,
+            tooLarge: true,
+            path: null,
+            message: 'PDF was generated and downloaded, but it was too large to save in history.'
+          };
+        }
+
         throw new Error(`PDF upload failed: ${error.message}`);
       }
 
-      return data.path;
+      return {
+        ok: true,
+        tooLarge: false,
+        path: data.path,
+        message: null
+      };
     }
 
     async function saveHistoryRow(file, status, pdfPath = null, errorMessage = null) {
@@ -414,8 +435,9 @@
         const statusClass =
           row.status === 'success' ? 'history-status-success' : 'history-status-failed';
 
+        const noteLabel = row.status === 'success' ? 'Note' : 'Error';
         const errorLine = row.error_message
-          ? `<div><strong>Error:</strong> ${escapeHtml(row.error_message)}</div>`
+          ? `<div><strong>${noteLabel}:</strong> ${escapeHtml(row.error_message)}</div>`
           : '';
 
         const createdAt = new Date(row.created_at).toLocaleString();
@@ -507,13 +529,24 @@
         link.remove();
         window.URL.revokeObjectURL(downloadUrl);
 
-        const pdfPath = await uploadPdfToStorage(blob, file.name);
+        const uploadResult = await uploadPdfToStorage(blob, file.name);
 
-        await saveHistoryRow(file, 'success', pdfPath, null);
+        await saveHistoryRow(
+          file,
+          'success',
+          uploadResult.ok ? uploadResult.path : null,
+          uploadResult.tooLarge ? uploadResult.message : null
+        );
+
         await loadHistory();
 
-        uploadMessage.textContent = 'PDF generated successfully. Download started and saved to history.';
-        uploadMessage.className = 'message success';
+        if (uploadResult.tooLarge) {
+          uploadMessage.textContent = uploadResult.message;
+          uploadMessage.className = 'message success';
+        } else {
+          uploadMessage.textContent = 'PDF generated successfully. Download started and saved to history.';
+          uploadMessage.className = 'message success';
+        }
       } catch (err) {
         await saveHistoryRow(file, 'failed', null, err.message || 'Something went wrong during conversion.');
         await loadHistory();
