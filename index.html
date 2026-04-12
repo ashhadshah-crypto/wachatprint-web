@@ -3,195 +3,801 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WAChatPrint</title>
-  <meta name="description" content="Convert exported WhatsApp chats into clean PDF files." />
+  <title>WAChatPrint | Convert WhatsApp Exports to PDF</title>
+  <meta
+    name="description"
+    content="Convert exported WhatsApp TXT and ZIP chat files into clean, downloadable PDFs. Secure, simple, and built for records, archives, and professional sharing."
+  />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #f7f9fc, #eef3ff);
-      color: #111827;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.6;
     }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
     .container {
       width: 100%;
-      max-width: 1100px;
+      max-width: 1160px;
       margin: 0 auto;
-      padding: 24px;
+      padding: 0 20px;
     }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-    }
-    .logo {
-      font-size: 24px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-    .email-link {
-      text-decoration: none;
-      color: #2563eb;
-      font-size: 14px;
-    }
-    .hero {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 0;
-    }
-    .hero-box {
-      background: #ffffff;
-      border-radius: 22px;
-      box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
-      padding: 48px 32px;
-      text-align: center;
-      max-width: 760px;
-      width: 100%;
-    }
-    .badge {
-      display: inline-block;
-      background: #e0ecff;
-      color: #1d4ed8;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 8px 14px;
-      border-radius: 999px;
-      margin-bottom: 20px;
-    }
-    h1 {
-      font-size: 42px;
-      line-height: 1.15;
-      margin-bottom: 18px;
-      color: #0f172a;
-    }
-    .subtitle {
-      font-size: 18px;
-      line-height: 1.7;
-      color: #475569;
-      max-width: 620px;
-      margin: 0 auto 28px;
-    }
-    .actions {
-      display: flex;
-      gap: 14px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 28px;
-    }
+
     .btn {
       display: inline-block;
-      text-decoration: none;
-      padding: 14px 22px;
+      border: none;
       border-radius: 12px;
-      font-weight: 600;
-      font-size: 15px;
+      padding: 14px 22px;
+      font-weight: 700;
+      cursor: pointer;
       transition: 0.2s ease;
     }
+
     .btn-primary {
       background: #2563eb;
-      color: #ffffff;
+      color: white;
     }
+
     .btn-primary:hover {
       background: #1d4ed8;
     }
+
     .btn-secondary {
-      background: #f1f5f9;
+      background: #e2e8f0;
       color: #0f172a;
     }
+
     .btn-secondary:hover {
-      background: #e2e8f0;
+      background: #cbd5e1;
     }
-    .info {
-      margin-top: 20px;
+
+    .section {
+      padding: 72px 0;
+    }
+
+    .section-title {
+      font-size: 34px;
+      line-height: 1.2;
+      margin-bottom: 14px;
+      color: #0f172a;
+    }
+
+    .section-subtitle {
+      max-width: 760px;
+      color: #475569;
+      font-size: 17px;
+      margin-bottom: 28px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(248, 250, 252, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .nav {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      font-size: 14px;
+      color: #334155;
+      font-weight: 600;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hero {
+      background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.16), transparent 30%),
+        linear-gradient(180deg, #f8fbff 0%, #f8fafc 100%);
+      padding: 90px 0 70px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 36px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 8px 14px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: 52px;
+      line-height: 1.08;
+      margin-bottom: 18px;
+      color: #0f172a;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: #475569;
+      max-width: 640px;
+      margin-bottom: 28px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .hero-note {
       font-size: 14px;
       color: #64748b;
-      line-height: 1.7;
     }
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
-      margin-top: 34px;
-      text-align: left;
-    }
-    .feature {
-      background: #f8fafc;
-      border-radius: 16px;
-      padding: 18px;
+
+    .hero-card {
+      background: white;
+      border-radius: 22px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      padding: 26px;
       border: 1px solid #e2e8f0;
     }
-    .feature h3 {
-      font-size: 16px;
-      margin-bottom: 8px;
+
+    .demo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .demo-header strong {
+      font-size: 15px;
+    }
+
+    .demo-pill {
+      font-size: 12px;
+      font-weight: 700;
+      background: #dcfce7;
+      color: #15803d;
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .chat-preview {
+      background: #efeae2;
+      border-radius: 18px;
+      padding: 16px;
+      min-height: 380px;
+    }
+
+    .day-separator {
+      text-align: center;
+      margin: 10px 0 14px;
+    }
+
+    .day-separator span {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .bubble-row {
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+    .bubble-row.left {
+      justify-content: flex-start;
+    }
+
+    .bubble-row.right {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: 78%;
+      border-radius: 12px;
+      padding: 10px 12px 8px;
+      font-size: 13px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+    }
+
+    .bubble.left {
+      background: #fff;
+      border-top-left-radius: 4px;
+    }
+
+    .bubble.right {
+      background: #dcf8c6;
+      border-top-right-radius: 4px;
+    }
+
+    .bubble .name {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #0f8f7d;
+    }
+
+    .bubble .time {
+      display: block;
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 5px;
+      text-align: right;
+    }
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .mini-stat {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .mini-stat strong {
+      display: block;
+      font-size: 20px;
+      margin-bottom: 4px;
       color: #0f172a;
     }
-    .feature p {
-      font-size: 14px;
-      line-height: 1.6;
-      color: #475569;
-    }
-    footer {
-      text-align: center;
-      padding: 18px 24px 28px;
+
+    .mini-stat span {
       font-size: 13px;
       color: #64748b;
     }
-    @media (max-width: 640px) {
-      h1 { font-size: 32px; }
-      .subtitle { font-size: 16px; }
-      .hero-box { padding: 34px 20px; }
-      header { flex-direction: column; gap: 10px; }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card,
+    .step-card,
+    .pricing-card,
+    .faq-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+    }
+
+    .feature-card h3,
+    .step-card h3,
+    .pricing-card h3,
+    .faq-card h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #0f172a;
+    }
+
+    .feature-card p,
+    .step-card p,
+    .pricing-card p,
+    .faq-card p {
+      color: #475569;
+      font-size: 15px;
+    }
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .pricing-card.featured {
+      border: 2px solid #2563eb;
+      transform: translateY(-4px);
+    }
+
+    .price {
+      font-size: 38px;
+      font-weight: 800;
+      margin: 14px 0 6px;
+      color: #0f172a;
+    }
+
+    .price small {
+      font-size: 15px;
+      font-weight: 500;
+      color: #64748b;
+    }
+
+    .pricing-list {
+      list-style: none;
+      margin: 18px 0 22px;
+      display: grid;
+      gap: 10px;
+      color: #475569;
+      font-size: 15px;
+    }
+
+    .pricing-list li::before {
+      content: "✓ ";
+      color: #15803d;
+      font-weight: 800;
+    }
+
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .cta-box {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: white;
+      border-radius: 24px;
+      padding: 40px;
+      display: flex;
+      justify-content: space-between;
+      gap: 30px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .cta-box h2 {
+      font-size: 34px;
+      margin-bottom: 12px;
+    }
+
+    .cta-box p {
+      color: #cbd5e1;
+      max-width: 680px;
+    }
+
+    footer {
+      padding: 34px 0 50px;
+      border-top: 1px solid #e2e8f0;
+      background: #fff;
+    }
+
+    .footer-grid {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .footer-left strong {
+      display: block;
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .footer-left p,
+    .footer-right p {
+      color: #64748b;
+      font-size: 14px;
+      max-width: 720px;
+    }
+
+    .footer-right {
+      text-align: right;
+    }
+
+    @media (max-width: 1024px) {
+      .hero-grid,
+      .grid-3,
+      .pricing-grid,
+      .faq-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h1 {
+        font-size: 42px;
+      }
+
+      .cta-box {
+        padding: 30px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .nav {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px 0;
+      }
+
+      .nav-links,
+      .nav-actions {
+        width: 100%;
+      }
+
+      .hero {
+        padding-top: 56px;
+      }
+
+      .hero h1 {
+        font-size: 34px;
+      }
+
+      .section {
+        padding: 56px 0;
+      }
+
+      .section-title {
+        font-size: 28px;
+      }
+
+      .footer-right {
+        text-align: left;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
+  <header>
+    <div class="container nav">
       <div class="logo">WAChatPrint</div>
-      <a class="email-link" href="mailto:hello@wachatprint.com">hello@wachatprint.com</a>
-    </header>
 
-    <section class="hero">
-      <div class="hero-box">
-        <div class="badge">Beta Setup</div>
-        <h1>Convert exported WhatsApp chats into clean PDF files</h1>
-        <p class="subtitle">
-          Upload your exported chat and get a structured, printable PDF in minutes.
-          Create your account now and be ready for early access.
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn btn-secondary" href="/auth.html?mode=login">Login</a>
+        <a class="btn btn-primary" href="/auth.html?mode=signup">Get Started</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="badge">WhatsApp Export to PDF</div>
+        <h1>Convert WhatsApp chat exports into clean, shareable PDF files</h1>
+        <p>
+          Upload exported WhatsApp TXT or ZIP files and turn them into structured PDFs for records,
+          archives, reporting, compliance, and professional sharing.
         </p>
 
-        <div class="actions">
-          <a class="btn btn-primary" href="/auth.html?mode=signup">Create Account</a>
-          <a class="btn btn-secondary" href="/auth.html?mode=login">Login</a>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="/auth.html?mode=signup">Start Free</a>
+          <a class="btn btn-secondary" href="/dashboard.html">Open Dashboard</a>
         </div>
 
-        <div class="features">
-          <div class="feature">
-            <h3>Simple upload</h3>
-            <p>Upload exported WhatsApp chat files and convert them into a neat PDF layout.</p>
-          </div>
-          <div class="feature">
-            <h3>Clean formatting</h3>
-            <p>Turn messy chat exports into readable, printable, and shareable documents.</p>
-          </div>
-          <div class="feature">
-            <h3>Built for business</h3>
-            <p>Useful for records, archives, reporting, and professional sharing.</p>
-          </div>
+        <div class="hero-note">
+          Supports TXT and ZIP exports. Not affiliated with WhatsApp or Meta.
         </div>
-
-        <p class="info">Not affiliated with WhatsApp or Meta.</p>
       </div>
-    </section>
-  </div>
+
+      <div class="hero-card">
+        <div class="demo-header">
+          <strong>PDF Preview Experience</strong>
+          <span class="demo-pill">Live MVP</span>
+        </div>
+
+        <div class="chat-preview">
+          <div class="day-separator"><span>12 Apr 2026</span></div>
+
+          <div class="bubble-row left">
+            <div class="bubble left">
+              <span class="name">Ahsan</span>
+              Please share the latest quotation and delivery update.
+              <span class="time">10:14 AM</span>
+            </div>
+          </div>
+
+          <div class="bubble-row right">
+            <div class="bubble right">
+              Sure — I’ll send the revised file today. 😎
+              <span class="time">10:16 AM</span>
+            </div>
+          </div>
+
+          <div class="bubble-row left">
+            <div class="bubble left">
+              <span class="name">Ahsan</span>
+              Great. Also include the final unit pricing and payment terms.
+              <span class="time">10:18 AM</span>
+            </div>
+          </div>
+
+          <div class="bubble-row right">
+            <div class="bubble right">
+              Done. Export will be converted into a proper PDF with chat structure.
+              <span class="time">10:22 AM</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <strong>TXT</strong>
+            <span>Direct conversion supported</span>
+          </div>
+          <div class="mini-stat">
+            <strong>ZIP</strong>
+            <span>Chat extraction supported</span>
+          </div>
+          <div class="mini-stat">
+            <strong>PDF</strong>
+            <span>Stored in user history</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="section">
+    <div class="container">
+      <h2 class="section-title">Built for real chat export needs</h2>
+      <p class="section-subtitle">
+        WAChatPrint is designed for people who need readable, downloadable, and organized PDF versions
+        of WhatsApp chat exports without manual formatting.
+      </p>
+
+      <div class="grid-3">
+        <div class="feature-card">
+          <h3>TXT and ZIP support</h3>
+          <p>
+            Upload exported chat files in TXT or ZIP format. ZIP uploads automatically detect the chat text file inside.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3>Clean PDF formatting</h3>
+          <p>
+            Chat-like layout, date separators, sender formatting, emoji handling, and multi-page output for large conversations.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3>Private user history</h3>
+          <p>
+            Logged-in users can keep a private history of conversions and re-download saved PDFs from their dashboard.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how-it-works" class="section" style="background:#fff;">
+    <div class="container">
+      <h2 class="section-title">How it works</h2>
+      <p class="section-subtitle">
+        The process is simple. Create your account, upload your exported chat, and download the PDF.
+      </p>
+
+      <div class="grid-3">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>Create an account</h3>
+          <p>
+            Sign up and access your private dashboard where your conversions and saved PDFs are managed.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>Upload your export</h3>
+          <p>
+            Upload a WhatsApp TXT or ZIP export. The system validates the file and prepares it for conversion.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>Download the PDF</h3>
+          <p>
+            Your export is converted into a structured PDF that can be downloaded immediately and saved in history.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing" class="section">
+    <div class="container">
+      <h2 class="section-title">Simple pricing direction</h2>
+      <p class="section-subtitle">
+        Start with a free plan and upgrade later for larger files, more history, and business-level usage.
+      </p>
+
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <h3>Free</h3>
+          <div class="price">$0 <small>/ month</small></div>
+          <p>For light personal use and testing.</p>
+          <ul class="pricing-list">
+            <li>Up to 5 MB input size</li>
+            <li>TXT and ZIP conversion</li>
+            <li>Basic saved history</li>
+            <li>Dashboard access</li>
+          </ul>
+          <a class="btn btn-secondary" href="/auth.html?mode=signup">Start Free</a>
+        </div>
+
+        <div class="pricing-card featured">
+          <h3>Pro</h3>
+          <div class="price">$9 <small>/ month</small></div>
+          <p>For professionals and frequent users.</p>
+          <ul class="pricing-list">
+            <li>Larger file limits</li>
+            <li>More saved conversions</li>
+            <li>Priority processing</li>
+            <li>Business-ready usage</li>
+          </ul>
+          <a class="btn btn-primary" href="/auth.html?mode=signup">Join Pro Waitlist</a>
+        </div>
+
+        <div class="pricing-card">
+          <h3>Business</h3>
+          <div class="price">Custom</div>
+          <p>For teams, records, and higher-volume workflows.</p>
+          <ul class="pricing-list">
+            <li>Higher limits</li>
+            <li>Team usage model</li>
+            <li>Extended storage options</li>
+            <li>Priority support</li>
+          </ul>
+          <a class="btn btn-secondary" href="mailto:hello@wachatprint.com?subject=Business%20Plan%20Inquiry">Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="section" style="background:#fff;">
+    <div class="container">
+      <h2 class="section-title">Frequently asked questions</h2>
+      <p class="section-subtitle">
+        These are the most important things users typically want to know before using the service.
+      </p>
+
+      <div class="faq-grid">
+        <div class="faq-card">
+          <h3>What file formats do you support?</h3>
+          <p>
+            WAChatPrint currently supports WhatsApp chat exports in TXT and ZIP format.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h3>Does ZIP support include media?</h3>
+          <p>
+            For now, ZIP support extracts the chat TXT file inside the archive. Media rendering can be added later.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h3>Are my files private?</h3>
+          <p>
+            User accounts and saved items are private. Generated PDFs stored in history use protected access and signed downloads.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h3>Can I download old PDFs again?</h3>
+          <p>
+            Yes. Saved items in your dashboard history can be downloaded again as long as they were stored successfully.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h3>Why are some large PDFs not saved?</h3>
+          <p>
+            Very large generated PDFs may download successfully but may not be saved in history due to storage size limits on the current plan.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h3>Is this an official WhatsApp product?</h3>
+          <p>
+            No. WAChatPrint is an independent tool and is not affiliated with WhatsApp or Meta.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="cta-box">
+        <div>
+          <h2>Ready to turn exported chats into PDFs?</h2>
+          <p>
+            Create your account and start using WAChatPrint today. Your dashboard, conversion flow,
+            history, and secure downloads are already live.
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="/auth.html?mode=signup">Create Free Account</a>
+          <a class="btn btn-secondary" href="/dashboard.html">Open Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <footer>
-    © 2026 WAChatPrint. All rights reserved.
+    <div class="container footer-grid">
+      <div class="footer-left">
+        <strong>WAChatPrint</strong>
+        <p>
+          Convert exported WhatsApp chat files into structured PDF documents.
+          Built for records, archives, compliance, and professional sharing.
+        </p>
+      </div>
+
+      <div class="footer-right">
+        <p>Contact: hello@wachatprint.com</p>
+        <p>Not affiliated with WhatsApp or Meta.</p>
+        <p>© 2026 WAChatPrint. All rights reserved.</p>
+      </div>
+    </div>
   </footer>
 </body>
 </html>
