@@ -141,6 +141,41 @@
       gap: 12px;
       flex-wrap: wrap;
     }
+
+    .history-list {
+      margin-top: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .history-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+
+    .history-item strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #0f172a;
+    }
+
+    .history-meta {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    .history-status-success {
+      color: #15803d;
+      font-weight: 700;
+    }
+
+    .history-status-failed {
+      color: #dc2626;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -186,6 +221,14 @@
         </div>
       </div>
     </div>
+
+    <div class="card">
+      <h2>Recent History</h2>
+      <p>Your latest conversions will appear here.</p>
+      <div id="historyList" class="history-list">
+        <div class="message muted">No history yet.</div>
+      </div>
+    </div>
   </div>
 
   <script type="module">
@@ -205,6 +248,7 @@
     const checkBtn = document.getElementById('checkBtn');
     const convertBtn = document.getElementById('convertBtn');
     const clearBtn = document.getElementById('clearBtn');
+    const historyList = document.getElementById('historyList');
 
     const MAX_SIZE = 5 * 1024 * 1024;
     const ALLOWED_EXTENSIONS = ['zip', 'txt'];
@@ -218,12 +262,83 @@
       }
 
       userEmail.textContent = `Logged in as: ${data.user.email}`;
+      await loadHistory();
     }
 
     function formatFileSize(bytes) {
       if (bytes < 1024) return `${bytes} bytes`;
       if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
       return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    async function saveHistoryRow(file, status, errorMessage = null) {
+      const { error } = await supabase.from('conversion_history').insert({
+        original_filename: file.name,
+        file_type: file.name.split('.').pop().toLowerCase(),
+        file_size_bytes: file.size,
+        status,
+        error_message: errorMessage
+      });
+
+      if (error) {
+        console.error('History save failed:', error.message);
+      }
+    }
+
+    function renderHistory(rows) {
+      if (!rows || rows.length === 0) {
+        historyList.innerHTML = `<div class="message muted">No history yet.</div>`;
+        return;
+      }
+
+      historyList.innerHTML = rows.map((row) => {
+        const statusClass =
+          row.status === 'success' ? 'history-status-success' : 'history-status-failed';
+
+        const errorLine = row.error_message
+          ? `<div><strong>Error:</strong> ${escapeHtml(row.error_message)}</div>`
+          : '';
+
+        const createdAt = new Date(row.created_at).toLocaleString();
+
+        return `
+          <div class="history-item">
+            <strong>${escapeHtml(row.original_filename)}</strong>
+            <div class="history-meta">
+              <div><strong>Type:</strong> .${escapeHtml(row.file_type)}</div>
+              <div><strong>Size:</strong> ${formatFileSize(row.file_size_bytes)}</div>
+              <div><strong>Status:</strong> <span class="${statusClass}">${escapeHtml(row.status)}</span></div>
+              <div><strong>Created:</strong> ${escapeHtml(createdAt)}</div>
+              ${errorLine}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadHistory() {
+      const { data, error } = await supabase
+        .from('conversion_history')
+        .select('id, original_filename, file_type, file_size_bytes, status, error_message, created_at')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        historyList.innerHTML = `<div class="message error">Could not load history.</div>`;
+        console.error(error.message);
+        return;
+      }
+
+      renderHistory(data);
     }
 
     function resetFileView() {
@@ -263,7 +378,7 @@
         uploadMessage.className = 'message error';
         fileInfo.style.display = 'block';
         fileInfo.innerHTML = `
-          <strong>Selected File:</strong> ${file.name}<br>
+          <strong>Selected File:</strong> ${escapeHtml(file.name)}<br>
           <strong>Size:</strong> ${formatFileSize(file.size)}<br>
           <strong>Status:</strong> Over free limit
         `;
@@ -272,8 +387,8 @@
 
       fileInfo.style.display = 'block';
       fileInfo.innerHTML = `
-        <strong>Selected File:</strong> ${file.name}<br>
-        <strong>Type:</strong> .${extension}<br>
+        <strong>Selected File:</strong> ${escapeHtml(file.name)}<br>
+        <strong>Type:</strong> .${escapeHtml(extension)}<br>
         <strong>Size:</strong> ${formatFileSize(file.size)}<br>
         <strong>Status:</strong> Valid
       `;
@@ -323,7 +438,7 @@
           let errorText = 'Conversion failed.';
           try {
             const errorData = await response.json();
-            errorText = errorData.detail || errorText;
+            errorText = errorData.detail || errorData.error || errorText;
           } catch (_) {}
           throw new Error(errorText);
         }
@@ -340,9 +455,15 @@
         link.remove();
         window.URL.revokeObjectURL(downloadUrl);
 
+        await saveHistoryRow(file, 'success', null);
+        await loadHistory();
+
         uploadMessage.textContent = 'PDF generated successfully. Download started.';
         uploadMessage.className = 'message success';
       } catch (err) {
+        await saveHistoryRow(file, 'failed', err.message || 'Something went wrong during conversion.');
+        await loadHistory();
+
         uploadMessage.textContent = err.message || 'Something went wrong during conversion.';
         uploadMessage.className = 'message error';
       } finally {
