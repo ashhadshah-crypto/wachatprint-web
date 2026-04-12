@@ -201,10 +201,11 @@
     </div>
 
     <div class="card">
-      <h2>Convert WhatsApp TXT to PDF</h2>
+      <h2>Convert WhatsApp Export to PDF</h2>
       <p>
-        Upload your exported WhatsApp chat file. Right now, direct conversion works for
-        <strong>.txt</strong> files up to <strong>5 MB</strong>. ZIP support will be added next.
+        Upload your exported WhatsApp chat file. Direct conversion now works for
+        <strong>.txt</strong> and <strong>.zip</strong> files up to <strong>5 MB</strong>.
+        ZIP files will use the chat <strong>.txt</strong> found inside the archive.
       </p>
 
       <div class="upload-box">
@@ -213,7 +214,7 @@
 
         <div class="note">
           Allowed formats: .zip, .txt<br />
-          Current direct conversion: .txt only<br />
+          ZIP support: yes<br />
           Free size limit: 5 MB
         </div>
 
@@ -344,13 +345,7 @@
         <strong>Status:</strong> Valid
       `;
 
-      if (extension === 'zip') {
-        uploadMessage.textContent = 'ZIP selected. ZIP conversion will be added next. For now, use TXT.';
-        uploadMessage.className = 'message muted';
-        return { ok: true, extension, file };
-      }
-
-      uploadMessage.textContent = 'TXT file looks good. You can convert it now.';
+      uploadMessage.textContent = 'File looks good. You can convert it now.';
       uploadMessage.className = 'message success';
       return { ok: true, extension, file };
     }
@@ -415,7 +410,7 @@
         return;
       }
 
-      historyList.innerHTML = rows.map((row, index) => {
+      historyList.innerHTML = rows.map((row) => {
         const statusClass =
           row.status === 'success' ? 'history-status-success' : 'history-status-failed';
 
@@ -467,15 +462,9 @@
       renderHistory(data);
     }
 
-    async function convertTxtToPdf() {
+    async function convertFileToPdf() {
       const result = validateSelectedFile();
       if (!result.ok) return;
-
-      if (result.extension !== 'txt') {
-        uploadMessage.textContent = 'ZIP conversion is not connected yet. Please upload a TXT file for now.';
-        uploadMessage.className = 'message error';
-        return;
-      }
 
       if (!RAILWAY_API_BASE) {
         uploadMessage.textContent = 'Railway API URL is missing in dashboard.html.';
@@ -542,7 +531,7 @@
     });
 
     checkBtn.addEventListener('click', validateSelectedFile);
-    convertBtn.addEventListener('click', convertTxtToPdf);
+    convertBtn.addEventListener('click', convertFileToPdf);
     clearBtn.addEventListener('click', resetFileView);
 
     chatFile.addEventListener('change', () => {
