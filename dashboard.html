@@ -71,6 +71,14 @@
       background: #0b7466;
     }
 
+    .btn-upgrade {
+      background: #2563eb;
+    }
+
+    .btn-billing {
+      background: #0f8f7d;
+    }
+
     .card {
       background: white;
       border-radius: 18px;
@@ -135,6 +143,13 @@
       margin-top: 6px;
       color: #64748b;
       font-size: 12px;
+    }
+
+    .plan-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .upload-box {
@@ -250,10 +265,12 @@
 
     <div class="card">
       <h2>Your Plan</h2>
-      <p>Current plan, file size limit, and remaining conversions.</p>
+      <p>Current plan, file size limit, remaining conversions, and billing actions.</p>
       <div id="planSummary" class="plan-grid">
         <div class="message muted">Loading plan details...</div>
       </div>
+      <div id="planActions" class="plan-actions"></div>
+      <div id="billingMessage" class="message muted"></div>
     </div>
 
     <div class="card">
@@ -315,11 +332,14 @@
     const clearBtn = document.getElementById('clearBtn');
     const historyList = document.getElementById('historyList');
     const planSummary = document.getElementById('planSummary');
+    const planActions = document.getElementById('planActions');
+    const billingMessage = document.getElementById('billingMessage');
 
     const MAX_SIZE = 50 * 1024 * 1024;
     const ALLOWED_EXTENSIONS = ['zip', 'txt'];
 
     let currentUser = null;
+    let currentUsage = null;
 
     async function loadUser() {
       const { data, error } = await supabase.auth.getUser();
@@ -351,6 +371,12 @@
     }
 
     function renderPlanSummary(data) {
+      currentUsage = data;
+
+      const renewalText = data.current_period_end
+        ? new Date(data.current_period_end).toLocaleString()
+        : 'Not available';
+
       planSummary.innerHTML = `
         <div class="plan-item">
           <strong>Current Plan</strong>
@@ -373,21 +399,45 @@
           <small>${escapeHtml(data.used_last_24h)} used in last 24 hours</small>
         </div>
       `;
+
+      if (data.plan === 'free') {
+        planActions.innerHTML = `
+          <button class="btn btn-upgrade" id="upgradeBtn" type="button">Upgrade to Pro – $5/month</button>
+        `;
+        const upgradeBtn = document.getElementById('upgradeBtn');
+        upgradeBtn.addEventListener('click', startCheckout);
+        billingMessage.textContent = '';
+        billingMessage.className = 'message muted';
+      } else {
+        planActions.innerHTML = `
+          <button class="btn btn-billing" id="manageBillingBtn" type="button">Manage Billing</button>
+        `;
+        const manageBillingBtn = document.getElementById('manageBillingBtn');
+        manageBillingBtn.addEventListener('click', openBillingPortal);
+
+        billingMessage.textContent = data.subscription_status
+          ? `Subscription status: ${data.subscription_status}${data.current_period_end ? ` · Current period end: ${renewalText}` : ''}`
+          : '';
+        billingMessage.className = 'message muted';
+      }
+    }
+
+    async function getAccessToken() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Please log in again.');
+      }
+      return session.access_token;
     }
 
     async function loadUsageSummary() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session?.access_token) {
-          planSummary.innerHTML = `<div class="message error">Could not load plan details.</div>`;
-          return;
-        }
+        const accessToken = await getAccessToken();
 
         const response = await fetch(`${RAILWAY_API_BASE}/usage-summary`, {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${session.access_token}`
+            Authorization: `Bearer ${accessToken}`
           }
         });
 
@@ -404,6 +454,69 @@
         renderPlanSummary(data);
       } catch (err) {
         planSummary.innerHTML = `<div class="message error">${escapeHtml(err.message || 'Could not load plan details.')}</div>`;
+        planActions.innerHTML = '';
+      }
+    }
+
+    async function startCheckout() {
+      try {
+        billingMessage.textContent = 'Redirecting to secure checkout...';
+        billingMessage.className = 'message muted';
+
+        const accessToken = await getAccessToken();
+
+        const response = await fetch(`${RAILWAY_API_BASE}/create-checkout-session`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+
+        if (!response.ok) {
+          let errorText = 'Could not start checkout.';
+          try {
+            const errorData = await response.json();
+            errorText = errorData.detail || errorData.error || errorText;
+          } catch (_) {}
+          throw new Error(errorText);
+        }
+
+        const data = await response.json();
+        window.location.href = data.url;
+      } catch (err) {
+        billingMessage.textContent = err.message || 'Could not start checkout.';
+        billingMessage.className = 'message error';
+      }
+    }
+
+    async function openBillingPortal() {
+      try {
+        billingMessage.textContent = 'Opening billing portal...';
+        billingMessage.className = 'message muted';
+
+        const accessToken = await getAccessToken();
+
+        const response = await fetch(`${RAILWAY_API_BASE}/create-portal-session`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+
+        if (!response.ok) {
+          let errorText = 'Could not open billing portal.';
+          try {
+            const errorData = await response.json();
+            errorText = errorData.detail || errorData.error || errorText;
+          } catch (_) {}
+          throw new Error(errorText);
+        }
+
+        const data = await response.json();
+        window.location.href = data.url;
+      } catch (err) {
+        billingMessage.textContent = err.message || 'Could not open billing portal.';
+        billingMessage.className = 'message error';
       }
     }
 
@@ -617,16 +730,12 @@
         uploadMessage.textContent = 'Converting file to PDF...';
         uploadMessage.className = 'message muted';
 
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session?.access_token) {
-          throw new Error('Please log in again.');
-        }
+        const accessToken = await getAccessToken();
 
         const response = await fetch(`${RAILWAY_API_BASE}/convert-txt`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${session.access_token}`
+            Authorization: `Bearer ${accessToken}`
           },
           body: formData
         });
