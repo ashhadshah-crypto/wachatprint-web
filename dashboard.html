@@ -101,6 +101,42 @@
       font-weight: 600;
     }
 
+    .plan-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .plan-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px;
+      background: #f8fafc;
+    }
+
+    .plan-item strong {
+      display: block;
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .plan-item span {
+      display: block;
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+
+    .plan-item small {
+      display: block;
+      margin-top: 6px;
+      color: #64748b;
+      font-size: 12px;
+    }
+
     .upload-box {
       margin-top: 20px;
       padding: 24px;
@@ -185,6 +221,18 @@
       color: #dc2626;
       font-weight: 700;
     }
+
+    @media (max-width: 860px) {
+      .plan-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .plan-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -201,6 +249,14 @@
     </div>
 
     <div class="card">
+      <h2>Your Plan</h2>
+      <p>Current plan, file size limit, and remaining conversions.</p>
+      <div id="planSummary" class="plan-grid">
+        <div class="message muted">Loading plan details...</div>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Convert WhatsApp Export to PDF</h2>
       <p>
         Upload your exported WhatsApp chat file. Direct conversion works for
@@ -214,7 +270,6 @@
         <div class="note">
           Allowed formats: .zip, .txt<br />
           Browser upload cap: 50 MB<br />
-          Free plan: 5 MB and 2 conversions per 24 hours<br />
           Final plan checks are enforced on the server
         </div>
 
@@ -259,6 +314,7 @@
     const convertBtn = document.getElementById('convertBtn');
     const clearBtn = document.getElementById('clearBtn');
     const historyList = document.getElementById('historyList');
+    const planSummary = document.getElementById('planSummary');
 
     const MAX_SIZE = 50 * 1024 * 1024;
     const ALLOWED_EXTENSIONS = ['zip', 'txt'];
@@ -276,6 +332,7 @@
       currentUser = data.user;
       userEmail.textContent = `Logged in as: ${data.user.email}`;
       await loadHistory();
+      await loadUsageSummary();
     }
 
     function formatFileSize(bytes) {
@@ -291,6 +348,63 @@
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#039;');
+    }
+
+    function renderPlanSummary(data) {
+      planSummary.innerHTML = `
+        <div class="plan-item">
+          <strong>Current Plan</strong>
+          <span>${escapeHtml(String(data.plan || '').toUpperCase())}</span>
+          <small>Your active subscription tier</small>
+        </div>
+        <div class="plan-item">
+          <strong>File Limit</strong>
+          <span>${escapeHtml(data.max_file_size_mb)} MB</span>
+          <small>Maximum file size for your plan</small>
+        </div>
+        <div class="plan-item">
+          <strong>Daily Limit</strong>
+          <span>${escapeHtml(data.daily_conversion_limit)}</span>
+          <small>Conversions allowed per 24 hours</small>
+        </div>
+        <div class="plan-item">
+          <strong>Remaining</strong>
+          <span>${escapeHtml(data.remaining_today)}</span>
+          <small>${escapeHtml(data.used_last_24h)} used in last 24 hours</small>
+        </div>
+      `;
+    }
+
+    async function loadUsageSummary() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session?.access_token) {
+          planSummary.innerHTML = `<div class="message error">Could not load plan details.</div>`;
+          return;
+        }
+
+        const response = await fetch(`${RAILWAY_API_BASE}/usage-summary`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        });
+
+        if (!response.ok) {
+          let errorText = 'Could not load plan details.';
+          try {
+            const errorData = await response.json();
+            errorText = errorData.detail || errorData.error || errorText;
+          } catch (_) {}
+          throw new Error(errorText);
+        }
+
+        const data = await response.json();
+        renderPlanSummary(data);
+      } catch (err) {
+        planSummary.innerHTML = `<div class="message error">${escapeHtml(err.message || 'Could not load plan details.')}</div>`;
+      }
     }
 
     function resetFileView() {
@@ -564,6 +678,7 @@
         uploadMessage.className = 'message error';
       } finally {
         convertBtn.disabled = false;
+        await loadUsageSummary();
       }
     }
 
