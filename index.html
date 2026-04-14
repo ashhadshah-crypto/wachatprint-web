@@ -420,14 +420,7 @@
       background: #fff;
     }
 
-    .footer-grid {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .footer-left strong {
+        .footer-left strong {
       display: block;
       font-size: 20px;
       margin-bottom: 8px;
@@ -497,30 +490,25 @@
         font-size: 28px;
       }
 
-      .footer-right {
-        text-align: left;
-      }
-    }
+          }
   </style>
 </head>
 <body>
-  <header>
+  <header class="site-header">
     <div class="container nav">
-      <div class="logo">WAChatPrint</div>
-
-      <nav class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#how-it-works">How It Works</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#faq">FAQ</a>
-      </nav>
-
+      <a class="logo" href="/">WAChatPrint</a>
+      <div class="nav-links">
+        <a href="/#features">Features</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/#faq">FAQ</a>
+      </div>
       <div class="nav-actions">
         <a class="btn btn-secondary" href="/auth.html?mode=login">Login</a>
-        <a class="btn btn-primary" href="/auth.html?mode=signup">Get Started</a>
+        <a class="btn" href="/auth.html?mode=signup">Get Started</a>
       </div>
     </div>
   </header>
+
 
   <section class="hero">
     <div class="container hero-grid">
@@ -789,29 +777,19 @@
     </div>
   </section>
 
-  <footer>
-    <div class="container footer-grid">
-      <div class="footer-left">
-        <strong>WAChatPrint</strong>
-        <p>
-          Convert exported WhatsApp chat files into structured PDF documents,
-          interactive HTML ZIP exports, and packaged media-ready records.
-        </p>
-        <p class="footer-links">
-          <a href="/">Home</a> ·
-          <a href="/privacy.html">Privacy Policy</a> ·
-          <a href="/terms.html">Terms of Service</a> ·
-          <a href="/refund.html">Refund Policy</a> ·
-          <a href="/cancellation.html">Cancellation Policy</a>
-        </p>
+  <footer class="site-footer">
+    <div class="container footer">
+      <div>© 2026 WAChatPrint. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/">Home</a> ·
+        <a href="/privacy.html">Privacy Policy</a> ·
+        <a href="/terms.html">Terms of Service</a> ·
+        <a href="/refund.html">Refund Policy</a> ·
+        <a href="/cancellation.html">Cancellation Policy</a>
       </div>
-
-      <div class="footer-right">
-        <p>Contact: hello@wachatprint.com</p>
-        <p>Not affiliated with WhatsApp or Meta.</p>
-        <p>© 2026 WAChatPrint. All rights reserved.</p>
-      </div>
+      <div class="footer-contact"><a href="mailto:hello@wachatprint.com">hello@wachatprint.com</a></div>
     </div>
   </footer>
+
 </body>
 </html>
