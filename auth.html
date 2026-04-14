@@ -11,10 +11,22 @@
       background: #f8fafc;
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 20px;
       color: #0f172a;
+    }
+    .site-footer {
+      margin-top: 24px;
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .site-footer a {
+      color: #2563eb;
+      text-decoration: none;
     }
     .card {
       width: 100%;
@@ -108,6 +120,14 @@
     <div class="link-row" id="switchLink"></div>
 
     <a class="back" href="/">← Back to home</a>
+  </div>
+
+  <div class="site-footer">
+    <a href="/">Home</a> ·
+    <a href="/privacy.html">Privacy Policy</a> ·
+    <a href="/terms.html">Terms of Service</a> ·
+    <a href="/refund.html">Refund Policy</a> ·
+    <a href="/cancellation.html">Cancellation Policy</a>
   </div>
 
   <script type="module">
