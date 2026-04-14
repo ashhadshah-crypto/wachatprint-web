@@ -71,14 +71,6 @@
       background: #0b7466;
     }
 
-    .btn-upgrade {
-      background: #2563eb;
-    }
-
-    .btn-billing {
-      background: #0f8f7d;
-    }
-
     .card {
       background: white;
       border-radius: 18px;
@@ -109,49 +101,6 @@
       font-weight: 600;
     }
 
-    .plan-grid {
-      margin-top: 16px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-    }
-
-    .plan-item {
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      padding: 16px;
-      background: #f8fafc;
-    }
-
-    .plan-item strong {
-      display: block;
-      font-size: 14px;
-      color: #64748b;
-      margin-bottom: 6px;
-    }
-
-    .plan-item span {
-      display: block;
-      font-size: 22px;
-      font-weight: 700;
-      color: #0f172a;
-      line-height: 1.2;
-    }
-
-    .plan-item small {
-      display: block;
-      margin-top: 6px;
-      color: #64748b;
-      font-size: 12px;
-    }
-
-    .plan-actions {
-      margin-top: 16px;
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
     .upload-box {
       margin-top: 20px;
       padding: 24px;
@@ -167,10 +116,47 @@
       width: 100%;
     }
 
+    .export-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .export-label {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #0f172a;
+      display: block;
+    }
+
+    .select-control {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: white;
+      font-size: 14px;
+      color: #0f172a;
+    }
+
+    .export-help {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 12px;
+      background: #ecfeff;
+      color: #155e75;
+      font-size: 14px;
+      line-height: 1.6;
+      border: 1px solid #bae6fd;
+    }
+
     .note {
       font-size: 14px;
       color: #64748b;
-      margin-top: 8px;
+      margin-top: 12px;
+      line-height: 1.7;
     }
 
     .file-info {
@@ -236,18 +222,6 @@
       color: #dc2626;
       font-weight: 700;
     }
-
-    @media (max-width: 860px) {
-      .plan-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 560px) {
-      .plan-grid {
-        grid-template-columns: 1fr;
-      }
-    }
   </style>
 </head>
 <body>
@@ -264,38 +238,43 @@
     </div>
 
     <div class="card">
-      <h2>Your Plan</h2>
-      <p>Current plan, file size limit, remaining conversions, and billing actions.</p>
-      <div id="planSummary" class="plan-grid">
-        <div class="message muted">Loading plan details...</div>
-      </div>
-      <div id="planActions" class="plan-actions"></div>
-      <div id="billingMessage" class="message muted"></div>
-    </div>
-
-    <div class="card">
-      <h2>Convert WhatsApp Export to PDF</h2>
+      <h2>Convert WhatsApp Export</h2>
       <p>
-        Upload your exported WhatsApp chat file. Direct conversion works for
-        <strong>.txt</strong> and <strong>.zip</strong> files.
+        Upload your exported WhatsApp chat file. Use WhatsApp <strong>.zip</strong> export
+        whenever you want images and voice files included in the output package.
       </p>
 
       <div class="upload-box">
         <label for="chatFile"><strong>Select file</strong></label>
         <input type="file" id="chatFile" accept=".zip,.txt" />
 
+        <div class="export-grid">
+          <div>
+            <label class="export-label" for="exportFormat">Export format</label>
+            <select class="select-control" id="exportFormat">
+              <option value="html_zip">Interactive HTML Export (.zip)</option>
+              <option value="pdf_media_zip">PDF + Media Package (.zip)</option>
+              <option value="pdf" selected>PDF Only (.pdf)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="export-help" id="exportHelp">
+          Single PDF download. Images can be embedded when present. Voice notes are listed as records in the PDF.
+        </div>
+
         <div class="note">
           Allowed formats: .zip, .txt<br />
           Browser upload cap: 50 MB<br />
-          ZIP image previews are supported when media files are included<br />
-          Final plan checks are enforced on the server
+          Free plan: 5 MB and 2 conversions per 24 hours<br />
+          Voice playback is fully supported in HTML export. PDF viewers may not support direct audio playback consistently.
         </div>
 
         <div class="file-info" id="fileInfo"></div>
 
         <div class="actions">
           <button class="btn" id="checkBtn" type="button">Validate File</button>
-          <button class="btn" id="convertBtn" type="button">Convert to PDF</button>
+          <button class="btn" id="convertBtn" type="button">Generate Export</button>
           <button class="btn btn-secondary" id="clearBtn" type="button">Clear</button>
         </div>
 
@@ -326,21 +305,34 @@
     const userEmail = document.getElementById('userEmail');
     const logoutBtn = document.getElementById('logoutBtn');
     const chatFile = document.getElementById('chatFile');
+    const exportFormat = document.getElementById('exportFormat');
+    const exportHelp = document.getElementById('exportHelp');
     const fileInfo = document.getElementById('fileInfo');
     const uploadMessage = document.getElementById('uploadMessage');
     const checkBtn = document.getElementById('checkBtn');
     const convertBtn = document.getElementById('convertBtn');
     const clearBtn = document.getElementById('clearBtn');
     const historyList = document.getElementById('historyList');
-    const planSummary = document.getElementById('planSummary');
-    const planActions = document.getElementById('planActions');
-    const billingMessage = document.getElementById('billingMessage');
 
     const MAX_SIZE = 50 * 1024 * 1024;
     const ALLOWED_EXTENSIONS = ['zip', 'txt'];
 
     let currentUser = null;
-    let currentUsage = null;
+
+    const EXPORT_OPTIONS = {
+      html_zip: {
+        downloadExtension: 'zip',
+        help: 'Best for viewing. Open index.html after extracting the ZIP. Images appear inline and voice notes can play in the browser.'
+      },
+      pdf_media_zip: {
+        downloadExtension: 'zip',
+        help: 'Best for record + attachments. ZIP contains chat.pdf and a media folder. Voice files may open in an external player depending on the PDF viewer.'
+      },
+      pdf: {
+        downloadExtension: 'pdf',
+        help: 'Single PDF download. Images can be embedded when present. Voice notes are listed as records in the PDF.'
+      }
+    };
 
     async function loadUser() {
       const { data, error } = await supabase.auth.getUser();
@@ -353,7 +345,6 @@
       currentUser = data.user;
       userEmail.textContent = `Logged in as: ${data.user.email}`;
       await loadHistory();
-      await loadUsageSummary();
     }
 
     function formatFileSize(bytes) {
@@ -371,154 +362,12 @@
         .replaceAll("'", '&#039;');
     }
 
-    function renderPlanSummary(data) {
-      currentUsage = data;
-
-      const renewalText = data.current_period_end
-        ? new Date(data.current_period_end).toLocaleString()
-        : 'Not available';
-
-      planSummary.innerHTML = `
-        <div class="plan-item">
-          <strong>Current Plan</strong>
-          <span>${escapeHtml(String(data.plan || '').toUpperCase())}</span>
-          <small>Your active subscription tier</small>
-        </div>
-        <div class="plan-item">
-          <strong>File Limit</strong>
-          <span>${escapeHtml(data.max_file_size_mb)} MB</span>
-          <small>Maximum file size for your plan</small>
-        </div>
-        <div class="plan-item">
-          <strong>Daily Limit</strong>
-          <span>${escapeHtml(data.daily_conversion_limit)}</span>
-          <small>Conversions allowed per 24 hours</small>
-        </div>
-        <div class="plan-item">
-          <strong>Remaining</strong>
-          <span>${escapeHtml(data.remaining_today)}</span>
-          <small>${escapeHtml(data.used_last_24h)} used in last 24 hours</small>
-        </div>
-      `;
-
-      if (data.plan === 'free') {
-        planActions.innerHTML = `
-          <button class="btn btn-upgrade" id="upgradeBtn" type="button">Upgrade to Pro – $5/month</button>
-        `;
-        const upgradeBtn = document.getElementById('upgradeBtn');
-        upgradeBtn.addEventListener('click', startCheckout);
-        billingMessage.textContent = '';
-        billingMessage.className = 'message muted';
-      } else {
-        planActions.innerHTML = `
-          <button class="btn btn-billing" id="manageBillingBtn" type="button">Manage Billing</button>
-        `;
-        const manageBillingBtn = document.getElementById('manageBillingBtn');
-        manageBillingBtn.addEventListener('click', openBillingPortal);
-
-        billingMessage.textContent = data.subscription_status
-          ? `Subscription status: ${data.subscription_status}${data.current_period_end ? ` · Current period end: ${renewalText}` : ''}`
-          : '';
-        billingMessage.className = 'message muted';
-      }
+    function currentExportConfig() {
+      return EXPORT_OPTIONS[exportFormat.value] || EXPORT_OPTIONS.pdf;
     }
 
-    async function getAccessToken() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Please log in again.');
-      }
-      return session.access_token;
-    }
-
-    async function loadUsageSummary() {
-      try {
-        const accessToken = await getAccessToken();
-
-        const response = await fetch(`${RAILWAY_API_BASE}/usage-summary`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        });
-
-        if (!response.ok) {
-          let errorText = 'Could not load plan details.';
-          try {
-            const errorData = await response.json();
-            errorText = errorData.detail || errorData.error || errorText;
-          } catch (_) {}
-          throw new Error(errorText);
-        }
-
-        const data = await response.json();
-        renderPlanSummary(data);
-      } catch (err) {
-        planSummary.innerHTML = `<div class="message error">${escapeHtml(err.message || 'Could not load plan details.')}</div>`;
-        planActions.innerHTML = '';
-      }
-    }
-
-    async function startCheckout() {
-      try {
-        billingMessage.textContent = 'Redirecting to secure checkout...';
-        billingMessage.className = 'message muted';
-
-        const accessToken = await getAccessToken();
-
-        const response = await fetch(`${RAILWAY_API_BASE}/create-checkout-session`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        });
-
-        if (!response.ok) {
-          let errorText = 'Could not start checkout.';
-          try {
-            const errorData = await response.json();
-            errorText = errorData.detail || errorData.error || errorText;
-          } catch (_) {}
-          throw new Error(errorText);
-        }
-
-        const data = await response.json();
-        window.location.href = data.url;
-      } catch (err) {
-        billingMessage.textContent = err.message || 'Could not start checkout.';
-        billingMessage.className = 'message error';
-      }
-    }
-
-    async function openBillingPortal() {
-      try {
-        billingMessage.textContent = 'Opening billing portal...';
-        billingMessage.className = 'message muted';
-
-        const accessToken = await getAccessToken();
-
-        const response = await fetch(`${RAILWAY_API_BASE}/create-portal-session`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        });
-
-        if (!response.ok) {
-          let errorText = 'Could not open billing portal.';
-          try {
-            const errorData = await response.json();
-            errorText = errorData.detail || errorData.error || errorText;
-          } catch (_) {}
-          throw new Error(errorText);
-        }
-
-        const data = await response.json();
-        window.location.href = data.url;
-      } catch (err) {
-        billingMessage.textContent = err.message || 'Could not open billing portal.';
-        billingMessage.className = 'message error';
-      }
+    function refreshExportHelp() {
+      exportHelp.textContent = currentExportConfig().help;
     }
 
     function resetFileView() {
@@ -527,6 +376,7 @@
       fileInfo.innerHTML = '';
       uploadMessage.textContent = 'No file selected yet.';
       uploadMessage.className = 'message muted';
+      refreshExportHelp();
     }
 
     function getSelectedFile() {
@@ -565,15 +415,20 @@
         return { ok: false };
       }
 
+      const needsZipMessage = extension !== 'zip' && exportFormat.value !== 'pdf'
+        ? ' TXT works, but upload the WhatsApp ZIP export if you want actual images and voice files included.'
+        : '';
+
       fileInfo.style.display = 'block';
       fileInfo.innerHTML = `
         <strong>Selected File:</strong> ${escapeHtml(file.name)}<br>
         <strong>Type:</strong> .${escapeHtml(extension)}<br>
         <strong>Size:</strong> ${formatFileSize(file.size)}<br>
+        <strong>Export:</strong> ${escapeHtml(exportFormat.options[exportFormat.selectedIndex].text)}<br>
         <strong>Status:</strong> Valid
       `;
 
-      uploadMessage.textContent = 'File looks good. Your current plan will be checked during conversion.';
+      uploadMessage.textContent = `File looks good.${needsZipMessage} Your current plan will be checked during export.`;
       uploadMessage.className = 'message success';
       return { ok: true, extension, file };
     }
@@ -712,7 +567,7 @@
       renderHistory(data);
     }
 
-    async function convertFileToPdf() {
+    async function convertFile() {
       const result = validateSelectedFile();
       if (!result.ok) return;
 
@@ -725,24 +580,29 @@
       const file = result.file;
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('export_format', exportFormat.value);
 
       try {
         convertBtn.disabled = true;
-        uploadMessage.textContent = 'Converting file to PDF...';
+        uploadMessage.textContent = 'Generating export...';
         uploadMessage.className = 'message muted';
 
-        const accessToken = await getAccessToken();
+        const { data: { session } } = await supabase.auth.getSession();
 
-        const response = await fetch(`${RAILWAY_API_BASE}/convert-txt`, {
+        if (!session?.access_token) {
+          throw new Error('Please log in again.');
+        }
+
+        const response = await fetch(`${RAILWAY_API_BASE}/export-chat`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${accessToken}`
+            Authorization: `Bearer ${session.access_token}`
           },
           body: formData
         });
 
         if (!response.ok) {
-          let errorText = 'Conversion failed.';
+          let errorText = 'Export failed.';
           try {
             const errorData = await response.json();
             errorText = errorData.detail || errorData.error || errorText;
@@ -755,40 +615,52 @@
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         const baseName = file.name.replace(/\.[^/.]+$/, '');
+        const extension = exportFormat.value === 'pdf' ? 'pdf' : 'zip';
+
         link.href = downloadUrl;
-        link.download = `${baseName}.pdf`;
+        link.download = `${baseName}.${extension}`;
         document.body.appendChild(link);
         link.click();
         link.remove();
         window.URL.revokeObjectURL(downloadUrl);
 
-        const uploadResult = await uploadPdfToStorage(blob, file.name);
+        if (exportFormat.value === 'pdf') {
+          const uploadResult = await uploadPdfToStorage(blob, file.name);
 
-        await saveHistoryRow(
-          file,
-          'success',
-          uploadResult.ok ? uploadResult.path : null,
-          uploadResult.tooLarge ? uploadResult.message : null
-        );
+          await saveHistoryRow(
+            file,
+            'success',
+            uploadResult.ok ? uploadResult.path : null,
+            uploadResult.tooLarge ? uploadResult.message : null
+          );
 
-        await loadHistory();
-
-        if (uploadResult.tooLarge) {
-          uploadMessage.textContent = uploadResult.message;
-          uploadMessage.className = 'message success';
+          if (uploadResult.tooLarge) {
+            uploadMessage.textContent = uploadResult.message;
+            uploadMessage.className = 'message success';
+          } else {
+            uploadMessage.textContent = 'PDF generated successfully. Download started and saved to history.';
+            uploadMessage.className = 'message success';
+          }
         } else {
-          uploadMessage.textContent = 'PDF generated successfully. Download started and saved to history.';
+          await saveHistoryRow(
+            file,
+            'success',
+            null,
+            'Export downloaded successfully. ZIP exports are not yet stored in cloud history.'
+          );
+          uploadMessage.textContent = 'Export generated successfully. Download started.';
           uploadMessage.className = 'message success';
         }
+
+        await loadHistory();
       } catch (err) {
-        await saveHistoryRow(file, 'failed', null, err.message || 'Something went wrong during conversion.');
+        await saveHistoryRow(file, 'failed', null, err.message || 'Something went wrong during export.');
         await loadHistory();
 
-        uploadMessage.textContent = err.message || 'Something went wrong during conversion.';
+        uploadMessage.textContent = err.message || 'Something went wrong during export.';
         uploadMessage.className = 'message error';
       } finally {
         convertBtn.disabled = false;
-        await loadUsageSummary();
       }
     }
 
@@ -798,7 +670,7 @@
     });
 
     checkBtn.addEventListener('click', validateSelectedFile);
-    convertBtn.addEventListener('click', convertFileToPdf);
+    convertBtn.addEventListener('click', convertFile);
     clearBtn.addEventListener('click', resetFileView);
 
     chatFile.addEventListener('change', () => {
@@ -806,6 +678,14 @@
       uploadMessage.className = 'message muted';
     });
 
+    exportFormat.addEventListener('change', () => {
+      refreshExportHelp();
+      if (getSelectedFile()) {
+        validateSelectedFile();
+      }
+    });
+
+    refreshExportHelp();
     loadUser();
   </script>
 </body>
