@@ -5,132 +5,199 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WAChatPrint - Auth</title>
   <style>
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: Arial, sans-serif;
       background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.7;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+    a { color: #2563eb; text-decoration: none; }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+      width: 100%;
+    }
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(248, 250, 252, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .nav {
+      min-height: 76px;
+      display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
       color: #0f172a;
     }
-    .site-footer {
-      margin-top: 24px;
-      text-align: center;
-      color: #64748b;
-      font-size: 14px;
-      line-height: 1.8;
+    .nav-links {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: center;
     }
-    .site-footer a {
-      color: #2563eb;
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+    }
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .btn {
+      display: inline-block;
+      border: none;
+      background: #2563eb;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
       text-decoration: none;
     }
+    .btn:hover { background: #1d4ed8; }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .btn-secondary:hover { background: #cbd5e1; }
+    main { flex: 1; }
+    .hero { padding: 56px 0 26px; }
+    h1 { font-size: 42px; line-height: 1.15; margin-bottom: 12px; }
+    .subtitle { color: #64748b; font-size: 15px; }
+    .content { padding: 18px 0 70px; }
     .card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 10px 24px rgba(15,23,42,0.04);
+    }
+    h2 {
+      font-size: 24px;
+      margin-top: 28px;
+      margin-bottom: 10px;
+      color: #0f172a;
+    }
+    h2:first-child { margin-top: 0; }
+    p { margin-bottom: 12px; color: #475569; font-size: 15px; }
+    ul { padding-left: 20px; margin-bottom: 14px; color: #475569; font-size: 15px; }
+    li { margin-bottom: 8px; }
+    .site-footer {
+      border-top: 1px solid #e2e8f0;
+      background: white;
+      padding: 28px 0 40px;
+      margin-top: auto;
+    }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      color: #64748b;
+      font-size: 14px;
+    }
+    .footer-links { color: #64748b; }
+    .footer-links a { color: #2563eb; }
+    @media (max-width: 720px) {
+      h1 { font-size: 32px; }
+      .card { padding: 22px; }
+      .nav { flex-direction: column; align-items: flex-start; padding: 14px 0; }
+    }
+
+    main.auth-main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 20px 72px;
+    }
+    .auth-card {
       width: 100%;
       max-width: 430px;
       background: white;
       border-radius: 18px;
       box-shadow: 0 12px 30px rgba(0,0,0,0.08);
       padding: 30px;
+      border: 1px solid #e2e8f0;
     }
-    h1 {
-      font-size: 28px;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-    p.sub {
-      text-align: center;
-      color: #64748b;
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      margin-bottom: 16px;
-      font-size: 15px;
-    }
-    button {
-      width: 100%;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      padding: 13px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-    }
+    .auth-card h1 { font-size: 28px; margin-bottom: 10px; text-align: center; }
+    .auth-card p.sub { text-align: center; color: #64748b; margin-bottom: 24px; line-height: 1.5; }
+    label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600; }
+    input { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 16px; font-size: 15px; }
+    button { width: 100%; background: #2563eb; color: white; border: none; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; }
     button:hover { background: #1d4ed8; }
-    .link-row {
-      margin-top: 18px;
-      text-align: center;
-      font-size: 14px;
-    }
-    .link-row a {
-      color: #2563eb;
-      text-decoration: none;
-    }
-    .message {
-      margin-top: 16px;
-      font-size: 14px;
-      line-height: 1.6;
-      text-align: center;
-    }
+    .link-row { margin-top: 18px; text-align: center; font-size: 14px; }
+    .link-row a { color: #2563eb; }
+    .message { margin-top: 16px; font-size: 14px; line-height: 1.6; text-align: center; }
     .success { color: #15803d; }
     .error { color: #dc2626; }
-    .back {
-      display: block;
-      margin-top: 16px;
-      text-align: center;
-      font-size: 14px;
-      text-decoration: none;
-      color: #475569;
-    }
+    .back { display: block; margin-top: 16px; text-align: center; font-size: 14px; text-decoration: none; color: #475569; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1 id="pageTitle">Create Account</h1>
-    <p class="sub" id="pageSub">Sign up to access WAChatPrint.</p>
 
-    <form id="authForm">
-      <label for="email">Email</label>
-      <input type="email" id="email" placeholder="Enter your email" required />
+  <header class="site-header">
+    <div class="container nav">
+      <a class="logo" href="/">WAChatPrint</a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/#pricing">Pricing</a>
+      </div>
+      <div class="nav-actions"></div>
+    </div>
+  </header>
 
-      <label for="password">Password</label>
-      <input type="password" id="password" placeholder="Enter your password" required />
 
-      <button type="submit" id="submitBtn">Create Account</button>
-    </form>
+  <main class="auth-main">
+    <div class="auth-card">
+      <h1 id="pageTitle">Create Account</h1>
+      <p class="sub" id="pageSub">Sign up to access WAChatPrint.</p>
+      <form id="authForm">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Enter your email" required />
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required />
+        <button type="submit" id="submitBtn">Create Account</button>
+      </form>
+      <div id="message" class="message"></div>
+      <div class="link-row" id="switchLink"></div>
+      <a class="back" href="/">← Back to home</a>
+    </div>
+  </main>
 
-    <div id="message" class="message"></div>
+  <footer class="site-footer">
+    <div class="container footer">
+      <div>© 2026 WAChatPrint. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/">Home</a> ·
+        <a href="/privacy.html">Privacy Policy</a> ·
+        <a href="/terms.html">Terms of Service</a> ·
+        <a href="/refund.html">Refund Policy</a> ·
+        <a href="/cancellation.html">Cancellation Policy</a>
+      </div>
+      <div class="footer-contact"><a href="mailto:hello@wachatprint.com">hello@wachatprint.com</a></div>
+    </div>
+  </footer>
 
-    <div class="link-row" id="switchLink"></div>
 
-    <a class="back" href="/">← Back to home</a>
-  </div>
-
-  <div class="site-footer">
-    <a href="/">Home</a> ·
-    <a href="/privacy.html">Privacy Policy</a> ·
-    <a href="/terms.html">Terms of Service</a> ·
-    <a href="/refund.html">Refund Policy</a> ·
-    <a href="/cancellation.html">Cancellation Policy</a>
-  </div>
-
-  <script type="module">
+<script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://owlzekmxjuaqxyqbssit.supabase.co';
