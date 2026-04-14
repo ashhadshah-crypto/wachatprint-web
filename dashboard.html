@@ -43,20 +43,6 @@
       gap: 12px;
     }
 
-    .topbar-nav {
-      display: flex;
-      gap: 18px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .topbar-nav a {
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-      color: #334155;
-    }
-
     .topbar-actions {
       display: flex;
       gap: 10px;
@@ -330,7 +316,7 @@
     .site-footer {
       max-width: 960px;
       margin: 0 auto;
-      padding: 4px 0 18px;
+      padding: 2px 0 18px;
       text-align: center;
       color: #64748b;
       font-size: 14px;
@@ -350,16 +336,12 @@
     <div class="wrap header-wrap">
       <div class="topbar">
         <a class="logo" href="/">WAChatPrint</a>
-        <div class="topbar-nav">
-          <a href="/">Home</a>
-        </div>
         <div class="topbar-actions">
           <button class="btn" id="logoutBtn">Logout</button>
         </div>
       </div>
     </div>
   </header>
-
 
   <div class="wrap content-wrap">
     <div class="card">
@@ -438,29 +420,13 @@
   </div>
 
   <div class="site-footer">
-    <a href="/">Home</a> ·
     <a href="/privacy.html">Privacy Policy</a> ·
     <a href="/terms.html">Terms of Service</a> ·
     <a href="/refund.html">Refund Policy</a> ·
     <a href="/cancellation.html">Cancellation Policy</a>
   </div>
 
-  
-  <footer class="site-footer">
-    <div class="container footer">
-      <div>© 2026 WAChatPrint. All rights reserved.</div>
-      <div class="footer-links">
-        <a href="/">Home</a> ·
-        <a href="/privacy.html">Privacy Policy</a> ·
-        <a href="/terms.html">Terms of Service</a> ·
-        <a href="/refund.html">Refund Policy</a> ·
-        <a href="/cancellation.html">Cancellation Policy</a>
-      </div>
-      <div class="footer-contact"><a href="mailto:hello@wachatprint.com">hello@wachatprint.com</a></div>
-    </div>
-  </footer>
-
-<script type="module">
+  <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://owlzekmxjuaqxyqbssit.supabase.co';
