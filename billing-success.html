@@ -5,61 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Billing Success | WAChatPrint</title>
   <style>
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: Arial, sans-serif;
       background: #f8fafc;
       color: #0f172a;
-      line-height: 1.7;
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
     }
-    a { color: #2563eb; text-decoration: none; }
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 20px;
+    .card {
       width: 100%;
+      max-width: 680px;
+      background: white;
+      border-radius: 20px;
+      padding: 32px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      text-align: center;
     }
-    .site-header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      background: rgba(248, 250, 252, 0.92);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid #e2e8f0;
+    h1 {
+      font-size: 32px;
+      margin-bottom: 12px;
     }
-    .nav {
-      min-height: 76px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
+    p {
+      color: #475569;
+      line-height: 1.7;
+      margin-bottom: 12px;
     }
-    .logo {
-      font-size: 24px;
-      font-weight: 800;
-      color: #0f172a;
+    .status-box {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      text-align: left;
     }
-    .nav-links {
-      display: flex;
-      gap: 18px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .nav-links a {
+    .status-title {
       font-size: 14px;
-      font-weight: 600;
-      color: #334155;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
     }
-    .nav-actions {
+    .status-message {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.7;
+    }
+    .success { color: #15803d; }
+    .error { color: #dc2626; }
+    .muted { color: #64748b; }
+    .actions {
+      margin-top: 22px;
       display: flex;
-      gap: 10px;
+      gap: 12px;
+      justify-content: center;
       flex-wrap: wrap;
-      align-items: center;
     }
     .btn {
       display: inline-block;
@@ -68,104 +71,106 @@
       color: white;
       padding: 12px 18px;
       border-radius: 10px;
+      text-decoration: none;
       font-weight: 600;
       cursor: pointer;
-      text-decoration: none;
     }
-    .btn:hover { background: #1d4ed8; }
     .btn-secondary {
       background: #e2e8f0;
       color: #0f172a;
     }
-    .btn-secondary:hover { background: #cbd5e1; }
-    main { flex: 1; }
-    .hero { padding: 56px 0 26px; }
-    h1 { font-size: 42px; line-height: 1.15; margin-bottom: 12px; }
-    .subtitle { color: #64748b; font-size: 15px; }
-    .content { padding: 18px 0 70px; }
-    .card {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 18px;
-      padding: 28px;
-      box-shadow: 0 10px 24px rgba(15,23,42,0.04);
-    }
-    h2 {
-      font-size: 24px;
-      margin-top: 28px;
-      margin-bottom: 10px;
-      color: #0f172a;
-    }
-    h2:first-child { margin-top: 0; }
-    p { margin-bottom: 12px; color: #475569; font-size: 15px; }
-    ul { padding-left: 20px; margin-bottom: 14px; color: #475569; font-size: 15px; }
-    li { margin-bottom: 8px; }
-    .site-footer {
-      border-top: 1px solid #e2e8f0;
-      background: white;
-      padding: 28px 0 40px;
-      margin-top: auto;
-    }
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      flex-wrap: wrap;
-      color: #64748b;
-      font-size: 14px;
-    }
-    .footer-links { color: #64748b; }
-    .footer-links a { color: #2563eb; }
-    @media (max-width: 720px) {
-      h1 { font-size: 32px; }
-      .card { padding: 22px; }
-      .nav { flex-direction: column; align-items: flex-start; padding: 14px 0; }
-    }
-
-    main.center-main { display:flex; align-items:center; justify-content:center; padding:48px 20px 72px; }
-    .card { width: 100%; max-width: 640px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
-    .actions { margin-top: 22px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   </style>
 </head>
 <body>
+  <div class="card">
+    <h1>Payment received</h1>
+    <p>Your checkout was completed successfully.</p>
+    <p>We are confirming your paid plan now. This usually finishes in a few seconds.</p>
 
-  <header class="site-header">
-    <div class="container nav">
-      <a class="logo" href="/">WAChatPrint</a>
-      <div class="nav-links">
-        <a href="/">Home</a>
-      </div>
-      <div class="nav-actions">
-        <a class="btn btn-secondary" href="/dashboard.html">Dashboard</a>
-      </div>
+    <div class="status-box">
+      <div class="status-title">Plan sync status</div>
+      <div id="statusMessage" class="status-message muted">Checking your subscription status...</div>
     </div>
-  </header>
 
-
-  <main class="center-main">
-    <div class="card">
-      <h1>Payment received</h1>
-<p>Your checkout was completed successfully.</p>
-<p>Your plan will update shortly after Stripe sends the subscription webhook.</p>
-<div class="actions"><a class="btn" href="/dashboard.html">Go to Dashboard</a>
-<a class="btn btn-secondary" href="/">Back to Home</a></div>
+    <div class="actions">
+      <a class="btn" href="/dashboard.html">Go to Dashboard</a>
+      <a class="btn btn-secondary" href="/">Back to Home</a>
     </div>
-  </main>
+  </div>
 
-  <footer class="site-footer">
-    <div class="container footer">
-      <div>© 2026 WAChatPrint. All rights reserved.</div>
-      <div class="footer-links">
-        <a href="/">Home</a> ·
-        <a href="/privacy.html">Privacy Policy</a> ·
-        <a href="/terms.html">Terms of Service</a> ·
-        <a href="/refund.html">Refund Policy</a> ·
-        <a href="/cancellation.html">Cancellation Policy</a>
-      </div>
-      <div class="footer-contact"><a href="mailto:hello@wachatprint.com">hello@wachatprint.com</a></div>
-    </div>
-  </footer>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+    const supabaseUrl = 'https://owlzekmxjuaqxyqbssit.supabase.co';
+    const supabaseKey = 'sb_publishable_GjhNJ7BAtIG4Rk9qvGFk3w_7hVgqDJF';
+    const RAILWAY_API_BASE = 'https://web-production-4854d.up.railway.app';
 
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const statusMessage = document.getElementById('statusMessage');
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+
+    function setStatus(text, kind = 'muted') {
+      statusMessage.textContent = text;
+      statusMessage.className = `status-message ${kind}`;
+    }
+
+    async function getAccessToken() {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token || null;
+    }
+
+    async function verifyPaidPlan() {
+      if (!sessionId) {
+        setStatus('Checkout succeeded, but no session reference was found in the page URL. Please open your dashboard and refresh your plan status.', 'error');
+        return;
+      }
+
+      const accessToken = await getAccessToken();
+
+      if (!accessToken) {
+        setStatus('Payment was received. Please log in again from the dashboard so we can confirm and refresh your plan.', 'error');
+        return;
+      }
+
+      for (let attempt = 1; attempt <= 5; attempt += 1) {
+        try {
+          setStatus(`Checking your subscription status... (${attempt}/5)`, 'muted');
+
+          const response = await fetch(`${RAILWAY_API_BASE}/verify-checkout-session?session_id=${encodeURIComponent(sessionId)}`, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          });
+
+          const data = await response.json().catch(() => ({}));
+
+          if (response.ok && data?.summary?.plan === 'pro') {
+            setStatus('Your Pro plan is now active. You can return to the dashboard.', 'success');
+            setTimeout(() => {
+              window.location.href = '/dashboard.html';
+            }, 1800);
+            return;
+          }
+
+          const msg = data.detail || data.error || 'Your payment was received, but the plan has not updated yet.';
+          if (attempt === 5) {
+            setStatus(`${msg} Please open the dashboard and refresh in a moment.`, 'error');
+            return;
+          }
+        } catch (err) {
+          if (attempt === 5) {
+            setStatus('Payment was received, but we could not confirm your plan automatically. Please open the dashboard and refresh in a moment.', 'error');
+            return;
+          }
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
+
+    verifyPaidPlan();
+  </script>
 </body>
 </html>
