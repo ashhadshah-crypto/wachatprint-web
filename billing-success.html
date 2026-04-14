@@ -1,176 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Billing Success | WAChatPrint</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: Arial, sans-serif;
-      background: #f8fafc;
-      color: #0f172a;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    .card {
-      width: 100%;
-      max-width: 680px;
-      background: white;
-      border-radius: 20px;
-      padding: 32px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-      text-align: center;
-    }
-    h1 {
-      font-size: 32px;
-      margin-bottom: 12px;
-    }
-    p {
-      color: #475569;
-      line-height: 1.7;
-      margin-bottom: 12px;
-    }
-    .status-box {
-      margin-top: 18px;
-      padding: 16px;
-      border-radius: 14px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      text-align: left;
-    }
-    .status-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 8px;
-    }
-    .status-message {
-      font-size: 14px;
-      color: #475569;
-      line-height: 1.7;
-    }
-    .success { color: #15803d; }
-    .error { color: #dc2626; }
-    .muted { color: #64748b; }
-    .actions {
-      margin-top: 22px;
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .btn {
-      display: inline-block;
-      border: none;
-      background: #2563eb;
-      color: white;
-      padding: 12px 18px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-secondary {
-      background: #e2e8f0;
-      color: #0f172a;
-    }
-  </style>
+  <title>Payment Success</title>
 </head>
 <body>
-  <div class="card">
-    <h1>Payment received</h1>
-    <p>Your checkout was completed successfully.</p>
-    <p>We are confirming your paid plan now. This usually finishes in a few seconds.</p>
+  <h2>Payment Successful</h2>
+  <p>Verifying your subscription... please wait.</p>
 
-    <div class="status-box">
-      <div class="status-title">Plan sync status</div>
-      <div id="statusMessage" class="status-message muted">Checking your subscription status...</div>
-    </div>
+  <script>
+    async function verify() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get("session_id");
 
-    <div class="actions">
-      <a class="btn" href="/dashboard.html">Go to Dashboard</a>
-      <a class="btn btn-secondary" href="/">Back to Home</a>
-    </div>
-  </div>
-
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    const supabaseUrl = 'https://owlzekmxjuaqxyqbssit.supabase.co';
-    const supabaseKey = 'sb_publishable_GjhNJ7BAtIG4Rk9qvGFk3w_7hVgqDJF';
-    const RAILWAY_API_BASE = 'https://web-production-4854d.up.railway.app';
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const statusMessage = document.getElementById('statusMessage');
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session_id');
-
-    function setStatus(text, kind = 'muted') {
-      statusMessage.textContent = text;
-      statusMessage.className = `status-message ${kind}`;
-    }
-
-    async function getAccessToken() {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.access_token || null;
-    }
-
-    async function verifyPaidPlan() {
-      if (!sessionId) {
-        setStatus('Checkout succeeded, but no session reference was found in the page URL. Please open your dashboard and refresh your plan status.', 'error');
-        return;
-      }
-
-      const accessToken = await getAccessToken();
-
-      if (!accessToken) {
-        setStatus('Payment was received. Please log in again from the dashboard so we can confirm and refresh your plan.', 'error');
-        return;
-      }
-
-      for (let attempt = 1; attempt <= 5; attempt += 1) {
-        try {
-          setStatus(`Checking your subscription status... (${attempt}/5)`, 'muted');
-
-          const response = await fetch(`${RAILWAY_API_BASE}/verify-checkout-session?session_id=${encodeURIComponent(sessionId)}`, {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            }
-          });
-
-          const data = await response.json().catch(() => ({}));
-
-          if (response.ok && data?.summary?.plan === 'pro') {
-            setStatus('Your Pro plan is now active. You can return to the dashboard.', 'success');
-            setTimeout(() => {
-              window.location.href = '/dashboard.html';
-            }, 1800);
-            return;
-          }
-
-          const msg = data.detail || data.error || 'Your payment was received, but the plan has not updated yet.';
-          if (attempt === 5) {
-            setStatus(`${msg} Please open the dashboard and refresh in a moment.`, 'error');
-            return;
-          }
-        } catch (err) {
-          if (attempt === 5) {
-            setStatus('Payment was received, but we could not confirm your plan automatically. Please open the dashboard and refresh in a moment.', 'error');
-            return;
-          }
+        if (!sessionId) {
+          document.body.innerHTML = "<h3>Missing session ID</h3>";
+          return;
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const res = await fetch("/verify-checkout-session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ session_id: sessionId })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          document.body.innerHTML = "<h2>Subscription Activated ✅</h2><p>Redirecting to dashboard...</p>";
+          setTimeout(() => {
+            window.location.href = "/dashboard.html";
+          }, 2000);
+        } else {
+          document.body.innerHTML = "<h3>Verification failed. Please contact support.</h3>";
+        }
+
+      } catch (err) {
+        document.body.innerHTML = "<h3>Error verifying subscription</h3>";
       }
     }
 
-    verifyPaidPlan();
+    verify();
   </script>
 </body>
 </html>
