@@ -44,32 +44,24 @@
       font-weight: 600;
     }
 
-    .btn:hover {
-      background: #1d4ed8;
-    }
-
-    .btn:disabled {
-      background: #94a3b8;
-      cursor: not-allowed;
-    }
+    .btn:hover { background: #1d4ed8; }
+    .btn:disabled { background: #94a3b8; cursor: not-allowed; }
 
     .btn-secondary {
       background: #e2e8f0;
       color: #0f172a;
     }
 
-    .btn-secondary:hover {
-      background: #cbd5e1;
-    }
+    .btn-secondary:hover { background: #cbd5e1; }
 
     .btn-download {
       margin-top: 10px;
       background: #0f8f7d;
     }
 
-    .btn-download:hover {
-      background: #0b7466;
-    }
+    .btn-download:hover { background: #0b7466; }
+    .btn-upgrade { background: #2563eb; }
+    .btn-billing { background: #0f8f7d; }
 
     .card {
       background: white;
@@ -79,15 +71,8 @@
       margin-bottom: 20px;
     }
 
-    h1 {
-      font-size: 30px;
-      margin-bottom: 10px;
-    }
-
-    h2 {
-      font-size: 22px;
-      margin-bottom: 12px;
-    }
+    h1 { font-size: 30px; margin-bottom: 10px; }
+    h2 { font-size: 22px; margin-bottom: 12px; }
 
     p {
       color: #475569;
@@ -99,6 +84,49 @@
       font-size: 15px;
       color: #15803d;
       font-weight: 600;
+    }
+
+    .plan-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .plan-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px;
+      background: #f8fafc;
+    }
+
+    .plan-item strong {
+      display: block;
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .plan-item span {
+      display: block;
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+
+    .plan-item small {
+      display: block;
+      margin-top: 6px;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .plan-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .upload-box {
@@ -213,14 +241,15 @@
       line-height: 1.7;
     }
 
-    .history-status-success {
-      color: #15803d;
-      font-weight: 700;
+    .history-status-success { color: #15803d; font-weight: 700; }
+    .history-status-failed { color: #dc2626; font-weight: 700; }
+
+    @media (max-width: 860px) {
+      .plan-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
-    .history-status-failed {
-      color: #dc2626;
-      font-weight: 700;
+    @media (max-width: 560px) {
+      .plan-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -235,6 +264,16 @@
       <h1>Welcome</h1>
       <p id="userEmail">Checking your session...</p>
       <div class="status">Your account is active.</div>
+    </div>
+
+    <div class="card">
+      <h2>Your Plan</h2>
+      <p>Current plan, file size limit, remaining conversions, and billing actions.</p>
+      <div id="planSummary" class="plan-grid">
+        <div class="message muted">Loading plan details...</div>
+      </div>
+      <div id="planActions" class="plan-actions"></div>
+      <div id="billingMessage" class="message muted"></div>
     </div>
 
     <div class="card">
@@ -266,8 +305,8 @@
         <div class="note">
           Allowed formats: .zip, .txt<br />
           Browser upload cap: 50 MB<br />
-          Free plan: 5 MB and 2 conversions per 24 hours<br />
-          Voice playback is fully supported in HTML export. PDF viewers may not support direct audio playback consistently.
+          Interactive HTML Export is the best experience for playable voice notes<br />
+          Voice files are included separately in PDF + Media Package and should be opened from the media folder
         </div>
 
         <div class="file-info" id="fileInfo"></div>
@@ -313,24 +352,31 @@
     const convertBtn = document.getElementById('convertBtn');
     const clearBtn = document.getElementById('clearBtn');
     const historyList = document.getElementById('historyList');
+    const planSummary = document.getElementById('planSummary');
+    const planActions = document.getElementById('planActions');
+    const billingMessage = document.getElementById('billingMessage');
 
     const MAX_SIZE = 50 * 1024 * 1024;
     const ALLOWED_EXTENSIONS = ['zip', 'txt'];
 
     let currentUser = null;
+    let currentUsage = null;
 
     const EXPORT_OPTIONS = {
       html_zip: {
         downloadExtension: 'zip',
-        help: 'Best for viewing. Open index.html after extracting the ZIP. Images appear inline and voice notes can play in the browser.'
+        historyLabel: 'Interactive HTML ZIP',
+        help: 'Recommended. Extract the ZIP and open index.html. Images appear inline and voice notes can be played directly in the browser.'
       },
       pdf_media_zip: {
         downloadExtension: 'zip',
-        help: 'Best for record + attachments. ZIP contains chat.pdf and a media folder. Voice files may open in an external player depending on the PDF viewer.'
+        historyLabel: 'PDF + Media ZIP',
+        help: 'ZIP contains chat.pdf and a media folder. Images are in the PDF. Voice files are included separately and should be opened from the media folder.'
       },
       pdf: {
         downloadExtension: 'pdf',
-        help: 'Single PDF download. Images can be embedded when present. Voice notes are listed as records in the PDF.'
+        historyLabel: 'PDF Only',
+        help: 'Single PDF download. Images can be embedded when present. Voice notes are shown as attachment records only.'
       }
     };
 
@@ -345,6 +391,7 @@
       currentUser = data.user;
       userEmail.textContent = `Logged in as: ${data.user.email}`;
       await loadHistory();
+      await loadUsageSummary();
     }
 
     function formatFileSize(bytes) {
@@ -368,6 +415,140 @@
 
     function refreshExportHelp() {
       exportHelp.textContent = currentExportConfig().help;
+    }
+
+    function renderPlanSummary(data) {
+      currentUsage = data;
+
+      const renewalText = data.current_period_end
+        ? new Date(data.current_period_end).toLocaleString()
+        : 'Not available';
+
+      planSummary.innerHTML = `
+        <div class="plan-item">
+          <strong>Current Plan</strong>
+          <span>${escapeHtml(String(data.plan || '').toUpperCase())}</span>
+          <small>Your active subscription tier</small>
+        </div>
+        <div class="plan-item">
+          <strong>File Limit</strong>
+          <span>${escapeHtml(data.max_file_size_mb)} MB</span>
+          <small>Maximum file size for your plan</small>
+        </div>
+        <div class="plan-item">
+          <strong>Daily Limit</strong>
+          <span>${escapeHtml(data.daily_conversion_limit)}</span>
+          <small>Conversions allowed per 24 hours</small>
+        </div>
+        <div class="plan-item">
+          <strong>Remaining</strong>
+          <span>${escapeHtml(data.remaining_today)}</span>
+          <small>${escapeHtml(data.used_last_24h)} used in last 24 hours</small>
+        </div>
+      `;
+
+      if (data.plan === 'free') {
+        planActions.innerHTML = `<button class="btn btn-upgrade" id="upgradeBtn" type="button">Upgrade to Pro – $5/month</button>`;
+        document.getElementById('upgradeBtn').addEventListener('click', startCheckout);
+        billingMessage.textContent = '';
+        billingMessage.className = 'message muted';
+      } else {
+        planActions.innerHTML = `<button class="btn btn-billing" id="manageBillingBtn" type="button">Manage Billing</button>`;
+        document.getElementById('manageBillingBtn').addEventListener('click', openBillingPortal);
+        billingMessage.textContent = data.subscription_status
+          ? `Subscription status: ${data.subscription_status}${data.current_period_end ? ` · Current period end: ${renewalText}` : ''}`
+          : '';
+        billingMessage.className = 'message muted';
+      }
+    }
+
+    async function getAccessToken() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Please log in again.');
+      }
+      return session.access_token;
+    }
+
+    async function loadUsageSummary() {
+      try {
+        const accessToken = await getAccessToken();
+        const response = await fetch(`${RAILWAY_API_BASE}/usage-summary`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) {
+          let errorText = 'Could not load plan details.';
+          try {
+            const errorData = await response.json();
+            errorText = errorData.detail || errorData.error || errorText;
+          } catch (_) {}
+          throw new Error(errorText);
+        }
+
+        const data = await response.json();
+        renderPlanSummary(data);
+      } catch (err) {
+        planSummary.innerHTML = `<div class="message error">${escapeHtml(err.message || 'Could not load plan details.')}</div>`;
+        planActions.innerHTML = '';
+      }
+    }
+
+    async function startCheckout() {
+      try {
+        billingMessage.textContent = 'Redirecting to secure checkout...';
+        billingMessage.className = 'message muted';
+        const accessToken = await getAccessToken();
+
+        const response = await fetch(`${RAILWAY_API_BASE}/create-checkout-session`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) {
+          let errorText = 'Could not start checkout.';
+          try {
+            const errorData = await response.json();
+            errorText = errorData.detail || errorData.error || errorText;
+          } catch (_) {}
+          throw new Error(errorText);
+        }
+
+        const data = await response.json();
+        window.location.href = data.url;
+      } catch (err) {
+        billingMessage.textContent = err.message || 'Could not start checkout.';
+        billingMessage.className = 'message error';
+      }
+    }
+
+    async function openBillingPortal() {
+      try {
+        billingMessage.textContent = 'Opening billing portal...';
+        billingMessage.className = 'message muted';
+        const accessToken = await getAccessToken();
+
+        const response = await fetch(`${RAILWAY_API_BASE}/create-portal-session`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) {
+          let errorText = 'Could not open billing portal.';
+          try {
+            const errorData = await response.json();
+            errorText = errorData.detail || errorData.error || errorText;
+          } catch (_) {}
+          throw new Error(errorText);
+        }
+
+        const data = await response.json();
+        window.location.href = data.url;
+      } catch (err) {
+        billingMessage.textContent = err.message || 'Could not open billing portal.';
+        billingMessage.className = 'message error';
+      }
     }
 
     function resetFileView() {
@@ -415,45 +596,40 @@
         return { ok: false };
       }
 
-      const needsZipMessage = extension !== 'zip' && exportFormat.value !== 'pdf'
-        ? ' TXT works, but upload the WhatsApp ZIP export if you want actual images and voice files included.'
-        : '';
-
       fileInfo.style.display = 'block';
       fileInfo.innerHTML = `
         <strong>Selected File:</strong> ${escapeHtml(file.name)}<br>
         <strong>Type:</strong> .${escapeHtml(extension)}<br>
         <strong>Size:</strong> ${formatFileSize(file.size)}<br>
-        <strong>Export:</strong> ${escapeHtml(exportFormat.options[exportFormat.selectedIndex].text)}<br>
+        <strong>Export:</strong> ${escapeHtml(currentExportConfig().historyLabel)}<br>
         <strong>Status:</strong> Valid
       `;
 
-      uploadMessage.textContent = `File looks good.${needsZipMessage} Your current plan will be checked during export.`;
+      uploadMessage.textContent = 'File looks good. Your current plan will be checked during export generation.';
       uploadMessage.className = 'message success';
       return { ok: true, extension, file };
     }
 
-    async function uploadPdfToStorage(blob, originalFileName) {
+    async function uploadExportToStorage(blob, originalFileName, exportFormatValue) {
       if (!currentUser) {
         throw new Error('User session not found.');
       }
 
+      const config = EXPORT_OPTIONS[exportFormatValue] || EXPORT_OPTIONS.pdf;
       const baseName = originalFileName.replace(/\.[^/.]+$/, '');
       const safeBaseName = baseName.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const pdfFileName = `${Date.now()}-${safeBaseName}.pdf`;
-      const pdfPath = `${currentUser.id}/${pdfFileName}`;
+      const extension = config.downloadExtension;
+      const exportFileName = `${Date.now()}-${safeBaseName}.${extension}`;
+      const exportPath = `${currentUser.id}/${exportFileName}`;
+      const contentType = extension === 'zip' ? 'application/zip' : 'application/pdf';
 
-      const { data, error } = await supabase
-        .storage
-        .from('generated-pdfs')
-        .upload(pdfPath, blob, {
-          contentType: 'application/pdf',
-          upsert: false
-        });
+      const { data, error } = await supabase.storage.from('generated-pdfs').upload(exportPath, blob, {
+        contentType,
+        upsert: false
+      });
 
       if (error) {
         const msg = (error.message || '').toLowerCase();
-
         if (
           msg.includes('maximum allowed size') ||
           msg.includes('object exceeded') ||
@@ -464,11 +640,11 @@
             ok: false,
             tooLarge: true,
             path: null,
-            message: 'PDF was generated and downloaded, but it was too large to save in history.'
+            message: 'Export was generated and downloaded, but it was too large to save in history.'
           };
         }
 
-        throw new Error(`PDF upload failed: ${error.message}`);
+        throw new Error(`Export upload failed: ${error.message}`);
       }
 
       return {
@@ -479,14 +655,17 @@
       };
     }
 
-    async function saveHistoryRow(file, status, pdfPath = null, errorMessage = null) {
+    async function saveHistoryRow(file, status, exportFormatValue, storedPath = null, errorMessage = null) {
+      const config = EXPORT_OPTIONS[exportFormatValue] || EXPORT_OPTIONS.pdf;
+      const note = errorMessage || `Export format: ${config.historyLabel}`;
+
       const { error } = await supabase.from('conversion_history').insert({
         original_filename: file.name,
         file_type: file.name.split('.').pop().toLowerCase(),
         file_size_bytes: file.size,
         status,
-        error_message: errorMessage,
-        pdf_path: pdfPath
+        error_message: note,
+        pdf_path: storedPath
       });
 
       if (error) {
@@ -494,17 +673,12 @@
       }
     }
 
-    async function openSignedPdf(pdfPath) {
-      const { data, error } = await supabase
-        .storage
-        .from('generated-pdfs')
-        .createSignedUrl(pdfPath, 60);
-
+    async function openSignedExport(path) {
+      const { data, error } = await supabase.storage.from('generated-pdfs').createSignedUrl(path, 60);
       if (error) {
         alert(`Could not create download link: ${error.message}`);
         return;
       }
-
       window.open(data.signedUrl, '_blank');
     }
 
@@ -515,18 +689,14 @@
       }
 
       historyList.innerHTML = rows.map((row) => {
-        const statusClass =
-          row.status === 'success' ? 'history-status-success' : 'history-status-failed';
-
+        const statusClass = row.status === 'success' ? 'history-status-success' : 'history-status-failed';
         const noteLabel = row.status === 'success' ? 'Note' : 'Error';
-        const errorLine = row.error_message
+        const noteLine = row.error_message
           ? `<div><strong>${noteLabel}:</strong> ${escapeHtml(row.error_message)}</div>`
           : '';
-
         const createdAt = new Date(row.created_at).toLocaleString();
-
         const downloadButton = row.pdf_path
-          ? `<button class="btn btn-download" data-pdf-path="${escapeHtml(row.pdf_path)}">Download PDF</button>`
+          ? `<button class="btn btn-download" data-export-path="${escapeHtml(row.pdf_path)}">Download Export</button>`
           : '';
 
         return `
@@ -537,17 +707,15 @@
               <div><strong>Size:</strong> ${formatFileSize(row.file_size_bytes)}</div>
               <div><strong>Status:</strong> <span class="${statusClass}">${escapeHtml(row.status)}</span></div>
               <div><strong>Created:</strong> ${escapeHtml(createdAt)}</div>
-              ${errorLine}
+              ${noteLine}
             </div>
             ${downloadButton}
           </div>
         `;
       }).join('');
 
-      historyList.querySelectorAll('[data-pdf-path]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          openSignedPdf(btn.getAttribute('data-pdf-path'));
-        });
+      historyList.querySelectorAll('[data-export-path]').forEach((btn) => {
+        btn.addEventListener('click', () => openSignedExport(btn.getAttribute('data-export-path')));
       });
     }
 
@@ -567,7 +735,7 @@
       renderHistory(data);
     }
 
-    async function convertFile() {
+    async function generateExport() {
       const result = validateSelectedFile();
       if (!result.ok) return;
 
@@ -578,26 +746,20 @@
       }
 
       const file = result.file;
+      const selectedExportFormat = exportFormat.value;
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('export_format', exportFormat.value);
+      formData.append('export_format', selectedExportFormat);
 
       try {
         convertBtn.disabled = true;
         uploadMessage.textContent = 'Generating export...';
         uploadMessage.className = 'message muted';
 
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session?.access_token) {
-          throw new Error('Please log in again.');
-        }
-
+        const accessToken = await getAccessToken();
         const response = await fetch(`${RAILWAY_API_BASE}/export-chat`, {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          },
+          headers: { Authorization: `Bearer ${accessToken}` },
           body: formData
         });
 
@@ -611,56 +773,42 @@
         }
 
         const blob = await response.blob();
-
+        const config = currentExportConfig();
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        const baseName = file.name.replace(/\.[^/.]+$/, '');
-        const extension = exportFormat.value === 'pdf' ? 'pdf' : 'zip';
-
         link.href = downloadUrl;
-        link.download = `${baseName}.${extension}`;
+        link.download = `${baseName}.${config.downloadExtension}`;
         document.body.appendChild(link);
         link.click();
         link.remove();
         window.URL.revokeObjectURL(downloadUrl);
 
-        if (exportFormat.value === 'pdf') {
-          const uploadResult = await uploadPdfToStorage(blob, file.name);
+        const uploadResult = await uploadExportToStorage(blob, file.name, selectedExportFormat);
+        await saveHistoryRow(
+          file,
+          'success',
+          selectedExportFormat,
+          uploadResult.ok ? uploadResult.path : null,
+          uploadResult.tooLarge ? uploadResult.message : null
+        );
 
-          await saveHistoryRow(
-            file,
-            'success',
-            uploadResult.ok ? uploadResult.path : null,
-            uploadResult.tooLarge ? uploadResult.message : null
-          );
-
-          if (uploadResult.tooLarge) {
-            uploadMessage.textContent = uploadResult.message;
-            uploadMessage.className = 'message success';
-          } else {
-            uploadMessage.textContent = 'PDF generated successfully. Download started and saved to history.';
-            uploadMessage.className = 'message success';
-          }
+        await loadHistory();
+        if (uploadResult.tooLarge) {
+          uploadMessage.textContent = uploadResult.message;
+          uploadMessage.className = 'message success';
         } else {
-          await saveHistoryRow(
-            file,
-            'success',
-            null,
-            'Export downloaded successfully. ZIP exports are not yet stored in cloud history.'
-          );
-          uploadMessage.textContent = 'Export generated successfully. Download started.';
+          uploadMessage.textContent = `${config.historyLabel} generated successfully. Download started and saved to history.`;
           uploadMessage.className = 'message success';
         }
-
-        await loadHistory();
       } catch (err) {
-        await saveHistoryRow(file, 'failed', null, err.message || 'Something went wrong during export.');
+        await saveHistoryRow(file, 'failed', selectedExportFormat, null, err.message || 'Something went wrong during export generation.');
         await loadHistory();
-
-        uploadMessage.textContent = err.message || 'Something went wrong during export.';
+        uploadMessage.textContent = err.message || 'Something went wrong during export generation.';
         uploadMessage.className = 'message error';
       } finally {
         convertBtn.disabled = false;
+        await loadUsageSummary();
       }
     }
 
@@ -670,19 +818,17 @@
     });
 
     checkBtn.addEventListener('click', validateSelectedFile);
-    convertBtn.addEventListener('click', convertFile);
+    convertBtn.addEventListener('click', generateExport);
     clearBtn.addEventListener('click', resetFileView);
+    exportFormat.addEventListener('change', () => {
+      refreshExportHelp();
+      if (chatFile.files.length) validateSelectedFile();
+    });
 
     chatFile.addEventListener('change', () => {
       uploadMessage.textContent = 'File selected. Click "Validate File".';
       uploadMessage.className = 'message muted';
-    });
-
-    exportFormat.addEventListener('change', () => {
-      refreshExportHelp();
-      if (getSelectedFile()) {
-        validateSelectedFile();
-      }
+      if (chatFile.files.length) validateSelectedFile();
     });
 
     refreshExportHelp();
