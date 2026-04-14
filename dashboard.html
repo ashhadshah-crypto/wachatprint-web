@@ -12,26 +12,63 @@
       background: #f8fafc;
       color: #0f172a;
       min-height: 100vh;
-      padding: 24px;
+      padding: 0;
     }
 
     .wrap {
-      max-width: 960px;
+      max-width: 1040px;
       margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .header-wrap { padding-top: 0; padding-bottom: 0; }
+
+    .content-wrap { padding-top: 24px; padding-bottom: 24px; }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(248, 250, 252, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #e2e8f0;
     }
 
     .topbar {
+      min-height: 76px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 30px;
       flex-wrap: wrap;
       gap: 12px;
     }
 
+    .topbar-nav {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .topbar-nav a {
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .topbar-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
     .logo {
       font-size: 24px;
-      font-weight: 700;
+      font-weight: 800;
+      color: #0f172a;
+      text-decoration: none;
     }
 
     .btn {
@@ -309,12 +346,22 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="logo">WAChatPrint</div>
-      <button class="btn" id="logoutBtn">Logout</button>
+  <header class="site-header">
+    <div class="wrap header-wrap">
+      <div class="topbar">
+        <a class="logo" href="/">WAChatPrint</a>
+        <div class="topbar-nav">
+          <a href="/">Home</a>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn" id="logoutBtn">Logout</button>
+        </div>
+      </div>
     </div>
+  </header>
 
+
+  <div class="wrap content-wrap">
     <div class="card">
       <h1>Welcome</h1>
       <p id="userEmail">Checking your session...</p>
@@ -388,19 +435,6 @@
       </div>
     </div>
 
-
-    <div class="card footer-card">
-      <div class="footer-links">
-        <p>Billing success and billing cancel pages are already used automatically during Stripe checkout.</p>
-        <div class="footer-links-nav">
-          <a href="/privacy.html">Privacy</a>
-          <a href="/terms.html">Terms</a>
-          <a href="/refund.html">Refund</a>
-          <a href="/cancellation.html">Cancellation</a>
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <div class="site-footer">
@@ -411,7 +445,22 @@
     <a href="/cancellation.html">Cancellation Policy</a>
   </div>
 
-  <script type="module">
+  
+  <footer class="site-footer">
+    <div class="container footer">
+      <div>© 2026 WAChatPrint. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/">Home</a> ·
+        <a href="/privacy.html">Privacy Policy</a> ·
+        <a href="/terms.html">Terms of Service</a> ·
+        <a href="/refund.html">Refund Policy</a> ·
+        <a href="/cancellation.html">Cancellation Policy</a>
+      </div>
+      <div class="footer-contact"><a href="mailto:hello@wachatprint.com">hello@wachatprint.com</a></div>
+    </div>
+  </footer>
+
+<script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://owlzekmxjuaqxyqbssit.supabase.co';
