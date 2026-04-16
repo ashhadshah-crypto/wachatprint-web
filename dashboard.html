@@ -56,7 +56,6 @@
     <div class="topbar">
       <div class="logo">WAChatPrint</div>
       <div class="topbar-right">
-        <button class="btn btn-secondary" id="refreshPlanBtn" type="button">Refresh Plan</button>
         <button class="btn" id="logoutBtn" type="button">Logout</button>
       </div>
     </div>
@@ -101,10 +100,7 @@
 
       <div class="card">
         <h2>How it works</h2>
-        <p>
-          Upload your WhatsApp export file and convert it to PDF.
-          Your plan controls the file size limit and daily conversion count.
-        </p>
+        <p>Upload your WhatsApp export file and convert it to PDF. Your plan controls the file size limit and daily conversion count.</p>
         <div class="note" style="margin-top:16px;">
           Free plan: 5 MB and 2 conversions per 24 hours<br />
           Pro plan: 50 MB and 50 conversions per 24 hours<br />
@@ -115,10 +111,7 @@
 
     <div class="card">
       <h2>Convert WhatsApp Export to PDF</h2>
-      <p>
-        Upload your exported WhatsApp chat file. Direct conversion works for
-        <strong>.txt</strong> and <strong>.zip</strong> files.
-      </p>
+      <p>Upload your exported WhatsApp chat file. Direct conversion works for <strong>.txt</strong> and <strong>.zip</strong> files.</p>
 
       <div class="upload-box">
         <label for="chatFile"><strong>Select file</strong></label>
@@ -155,7 +148,6 @@
 
     const userEmail = document.getElementById('userEmail');
     const logoutBtn = document.getElementById('logoutBtn');
-    const refreshPlanBtn = document.getElementById('refreshPlanBtn');
     const upgradeBtn = document.getElementById('upgradeBtn');
     const billingBtn = document.getElementById('billingBtn');
     const planValue = document.getElementById('planValue');
@@ -166,7 +158,6 @@
     const planStatusText = document.getElementById('planStatusText');
     const planMessage = document.getElementById('planMessage');
     const planBadge = document.getElementById('planBadge');
-
     const chatFile = document.getElementById('chatFile');
     const fileInfo = document.getElementById('fileInfo');
     const uploadMessage = document.getElementById('uploadMessage');
@@ -180,6 +171,7 @@
 
     let currentUser = null;
     let currentPlanData = null;
+    let autoSyncTimer = null;
 
     function formatFileSize(bytes) {
       if (bytes < 1024) return `${bytes} bytes`;
@@ -211,9 +203,7 @@
       let data = null;
       try { data = await res.json(); } catch (_) {}
 
-      if (!res.ok) {
-        throw new Error(data?.detail || data?.error || 'Request failed');
-      }
+      if (!res.ok) throw new Error(data?.detail || data?.error || 'Request failed');
       return data;
     }
 
@@ -247,6 +237,20 @@
         const cleanUrl = `${window.location.origin}${window.location.pathname}`;
         window.history.replaceState({}, document.title, cleanUrl);
       }
+    }
+
+    async function syncPlanSilently() {
+      try {
+        await apiFetch('/refresh-subscription', { method: 'POST' });
+      } catch (_) {}
+    }
+
+    function startAutoPlanSync() {
+      if (autoSyncTimer) clearInterval(autoSyncTimer);
+      autoSyncTimer = setInterval(async () => {
+        await syncPlanSilently();
+        await loadPlanSummary(false);
+      }, 15000);
     }
 
     function resetFileView() {
@@ -411,30 +415,22 @@
         try { statusText += ` • ends ${new Date(data.current_period_end).toLocaleString()}`; } catch (_) {}
       }
       planStatusText.textContent = statusText;
-      planMessage.textContent = `Plan synced. ${remaining} conversions remaining in the last 24-hour window.`;
-      planMessage.className = 'message success';
     }
 
-    async function loadPlanSummary() {
+    async function loadPlanSummary(showLoading = true) {
       try {
-        planMessage.textContent = 'Loading billing details...';
-        planMessage.className = 'message muted';
+        if (showLoading) {
+          planMessage.textContent = 'Loading billing details...';
+          planMessage.className = 'message muted';
+        }
         const data = await apiFetch('/usage-summary');
         renderPlan(data);
+
+        const remaining = Math.max((data.remaining_conversions ?? 0), 0);
+        planMessage.textContent = `Plan synced automatically. ${remaining} conversions remaining in the last 24-hour window.`;
+        planMessage.className = 'message success';
       } catch (err) {
         planMessage.textContent = err.message || 'Could not load billing details.';
-        planMessage.className = 'message error';
-      }
-    }
-
-    async function refreshPlan() {
-      try {
-        planMessage.textContent = 'Refreshing plan...';
-        planMessage.className = 'message muted';
-        await apiFetch('/refresh-subscription', { method: 'POST' });
-        await loadPlanSummary();
-      } catch (err) {
-        planMessage.textContent = err.message || 'Could not refresh plan.';
         planMessage.className = 'message error';
       }
     }
@@ -479,8 +475,11 @@
       }
       currentUser = data.user;
       userEmail.textContent = `Logged in as: ${data.user.email}`;
+
       await verifyCheckoutIfNeeded();
-      await Promise.all([loadPlanSummary(), loadHistory()]);
+      await syncPlanSilently();
+      await Promise.all([loadPlanSummary(false), loadHistory()]);
+      startAutoPlanSync();
     }
 
     async function convertFileToPdf() {
@@ -528,7 +527,8 @@
         const uploadResult = await uploadPdfToStorage(blob, file.name);
 
         await saveHistoryRow(file, 'success', uploadResult.ok ? uploadResult.path : null, uploadResult.tooLarge ? uploadResult.message : null);
-        await Promise.all([loadHistory(), loadPlanSummary()]);
+        await syncPlanSilently();
+        await Promise.all([loadHistory(), loadPlanSummary(false)]);
 
         if (uploadResult.tooLarge) {
           uploadMessage.textContent = uploadResult.message;
@@ -539,7 +539,7 @@
         }
       } catch (err) {
         await saveHistoryRow(file, 'failed', null, err.message || 'Something went wrong during conversion.');
-        await Promise.all([loadHistory(), loadPlanSummary()]);
+        await Promise.all([loadHistory(), loadPlanSummary(false)]);
         uploadMessage.textContent = err.message || 'Something went wrong during conversion.';
         uploadMessage.className = 'message error';
       } finally {
@@ -547,12 +547,19 @@
       }
     }
 
+    document.addEventListener('visibilitychange', async () => {
+      if (!document.hidden && currentUser) {
+        await syncPlanSilently();
+        await loadPlanSummary(false);
+      }
+    });
+
     logoutBtn.addEventListener('click', async () => {
+      if (autoSyncTimer) clearInterval(autoSyncTimer);
       await supabase.auth.signOut();
       window.location.href = '/';
     });
 
-    refreshPlanBtn.addEventListener('click', refreshPlan);
     upgradeBtn.addEventListener('click', startCheckout);
     billingBtn.addEventListener('click', openBillingPortal);
     checkBtn.addEventListener('click', validateSelectedFile);
