@@ -3,90 +3,585 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WA Chat Print - Dashboard</title>
+  <title>WAChatPrint - Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f7f7f7; padding:24px; }
-    .card { background:#fff; border-radius:12px; padding:20px; max-width:600px; margin:auto; box-shadow:0 2px 10px rgba(0,0,0,0.08); }
-    h1 { margin-top:0; }
-    .row { margin:12px 0; }
-    .label { color:#666; font-size:14px; }
-    .value { font-size:20px; font-weight:700; }
-    button { margin-top:16px; padding:12px 16px; border:0; border-radius:8px; cursor:pointer; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .btn {
+      border: none;
+      background: #2563eb;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn:hover {
+      background: #1d4ed8;
+    }
+
+    .btn:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    .btn-download {
+      margin-top: 10px;
+      background: #0f8f7d;
+    }
+
+    .btn-download:hover {
+      background: #0b7466;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+
+    p {
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 15px;
+      color: #15803d;
+      font-weight: 600;
+    }
+
+    .upload-box {
+      margin-top: 20px;
+      padding: 24px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      background: #f8fafc;
+    }
+
+    .upload-box input[type="file"] {
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+
+    .note {
+      font-size: 14px;
+      color: #64748b;
+      margin-top: 8px;
+    }
+
+    .file-info {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: #1e3a8a;
+      font-size: 14px;
+      line-height: 1.7;
+      display: none;
+    }
+
+    .message {
+      margin-top: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+
+    .success { color: #15803d; }
+    .error { color: #dc2626; }
+    .muted { color: #64748b; }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .history-list {
+      margin-top: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .history-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+
+    .history-item strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #0f172a;
+    }
+
+    .history-meta {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.7;
+    }
+
+    .history-status-success {
+      color: #15803d;
+      font-weight: 700;
+    }
+
+    .history-status-failed {
+      color: #dc2626;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Your Plan</h1>
-
-    <div class="row">
-      <div class="label">Current Plan</div>
-      <div class="value" id="planValue">Loading...</div>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="logo">WAChatPrint</div>
+      <button class="btn" id="logoutBtn">Logout</button>
     </div>
 
-    <div class="row">
-      <div class="label">File Limit</div>
-      <div class="value" id="fileLimitValue">Loading...</div>
+    <div class="card">
+      <h1>Welcome</h1>
+      <p id="userEmail">Checking your session...</p>
+      <div class="status">Your account is active.</div>
     </div>
 
-    <div class="row">
-      <div class="label">Daily Limit</div>
-      <div class="value" id="dailyLimitValue">Loading...</div>
+    <div class="card">
+      <h2>Convert WhatsApp Export to PDF</h2>
+      <p>
+        Upload your exported WhatsApp chat file. Direct conversion works for
+        <strong>.txt</strong> and <strong>.zip</strong> files.
+      </p>
+
+      <div class="upload-box">
+        <label for="chatFile"><strong>Select file</strong></label>
+        <input type="file" id="chatFile" accept=".zip,.txt" />
+
+        <div class="note">
+          Allowed formats: .zip, .txt<br />
+          Browser upload cap: 50 MB<br />
+          Free plan: 5 MB and 2 conversions per 24 hours<br />
+          Final plan checks are enforced on the server
+        </div>
+
+        <div class="file-info" id="fileInfo"></div>
+
+        <div class="actions">
+          <button class="btn" id="checkBtn" type="button">Validate File</button>
+          <button class="btn" id="convertBtn" type="button">Convert to PDF</button>
+          <button class="btn btn-secondary" id="clearBtn" type="button">Clear</button>
+        </div>
+
+        <div class="message muted" id="uploadMessage">
+          No file selected yet.
+        </div>
+      </div>
     </div>
 
-    <button onclick="openBilling()">Manage Billing</button>
+    <div class="card">
+      <h2>Recent History</h2>
+      <p>Your latest conversions will appear here.</p>
+      <div id="historyList" class="history-list">
+        <div class="message muted">No history yet.</div>
+      </div>
+    </div>
   </div>
 
-  <script>
-    const API_BASE = "https://web-production-4854d.up.railway.app";
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    function getAccessToken() {
-      return localStorage.getItem("sb-access-token");
-    }
+    const supabaseUrl = 'https://owlzekmxjuaqxyqbssit.supabase.co';
+    const supabaseKey = 'sb_publishable_GjhNJ7BAtIG4Rk9qvGFk3w_7hVgqDJF';
+    const RAILWAY_API_BASE = 'https://web-production-4854d.up.railway.app';
 
-    async function loadUsage() {
-      const token = getAccessToken();
-      if (!token) {
-        alert("Login required");
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const userEmail = document.getElementById('userEmail');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const chatFile = document.getElementById('chatFile');
+    const fileInfo = document.getElementById('fileInfo');
+    const uploadMessage = document.getElementById('uploadMessage');
+    const checkBtn = document.getElementById('checkBtn');
+    const convertBtn = document.getElementById('convertBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const historyList = document.getElementById('historyList');
+
+    const MAX_SIZE = 50 * 1024 * 1024;
+    const ALLOWED_EXTENSIONS = ['zip', 'txt'];
+
+    let currentUser = null;
+
+    async function loadUser() {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error || !data.user) {
+        window.location.href = '/auth.html?mode=login';
         return;
       }
 
-      const res = await fetch(`${API_BASE}/usage-summary`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      const data = await res.json();
-
-      document.getElementById("planValue").textContent = (data.plan || "free").toUpperCase();
-      document.getElementById("fileLimitValue").textContent = `${data.max_file_size_mb || 5} MB`;
-      document.getElementById("dailyLimitValue").textContent = `${data.daily_conversion_limit || 2}`;
+      currentUser = data.user;
+      userEmail.textContent = `Logged in as: ${data.user.email}`;
+      await loadHistory();
     }
 
-    async function openBilling() {
-      const token = getAccessToken();
-      if (!token) {
-        alert("Login required");
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return `${bytes} bytes`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function resetFileView() {
+      chatFile.value = '';
+      fileInfo.style.display = 'none';
+      fileInfo.innerHTML = '';
+      uploadMessage.textContent = 'No file selected yet.';
+      uploadMessage.className = 'message muted';
+    }
+
+    function getSelectedFile() {
+      return chatFile.files[0] || null;
+    }
+
+    function validateSelectedFile() {
+      const file = getSelectedFile();
+
+      if (!file) {
+        uploadMessage.textContent = 'Please select a file first.';
+        uploadMessage.className = 'message error';
+        fileInfo.style.display = 'none';
+        return { ok: false };
+      }
+
+      const fileName = file.name;
+      const extension = fileName.split('.').pop().toLowerCase();
+
+      if (!ALLOWED_EXTENSIONS.includes(extension)) {
+        uploadMessage.textContent = 'Invalid file type. Please upload only .zip or .txt files.';
+        uploadMessage.className = 'message error';
+        fileInfo.style.display = 'none';
+        return { ok: false };
+      }
+
+      if (file.size > MAX_SIZE) {
+        uploadMessage.textContent = 'File is too large. Current system max is 50 MB.';
+        uploadMessage.className = 'message error';
+        fileInfo.style.display = 'block';
+        fileInfo.innerHTML = `
+          <strong>Selected File:</strong> ${escapeHtml(file.name)}<br>
+          <strong>Size:</strong> ${formatFileSize(file.size)}<br>
+          <strong>Status:</strong> Over system limit
+        `;
+        return { ok: false };
+      }
+
+      fileInfo.style.display = 'block';
+      fileInfo.innerHTML = `
+        <strong>Selected File:</strong> ${escapeHtml(file.name)}<br>
+        <strong>Type:</strong> .${escapeHtml(extension)}<br>
+        <strong>Size:</strong> ${formatFileSize(file.size)}<br>
+        <strong>Status:</strong> Valid
+      `;
+
+      uploadMessage.textContent = 'File looks good. Your current plan will be checked during conversion.';
+      uploadMessage.className = 'message success';
+      return { ok: true, extension, file };
+    }
+
+    async function uploadPdfToStorage(blob, originalFileName) {
+      if (!currentUser) {
+        throw new Error('User session not found.');
+      }
+
+      const baseName = originalFileName.replace(/\.[^/.]+$/, '');
+      const safeBaseName = baseName.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const pdfFileName = `${Date.now()}-${safeBaseName}.pdf`;
+      const pdfPath = `${currentUser.id}/${pdfFileName}`;
+
+      const { data, error } = await supabase
+        .storage
+        .from('generated-pdfs')
+        .upload(pdfPath, blob, {
+          contentType: 'application/pdf',
+          upsert: false
+        });
+
+      if (error) {
+        const msg = (error.message || '').toLowerCase();
+
+        if (
+          msg.includes('maximum allowed size') ||
+          msg.includes('object exceeded') ||
+          msg.includes('payload too large') ||
+          msg.includes('entity too large')
+        ) {
+          return {
+            ok: false,
+            tooLarge: true,
+            path: null,
+            message: 'PDF was generated and downloaded, but it was too large to save in history.'
+          };
+        }
+
+        throw new Error(`PDF upload failed: ${error.message}`);
+      }
+
+      return {
+        ok: true,
+        tooLarge: false,
+        path: data.path,
+        message: null
+      };
+    }
+
+    async function saveHistoryRow(file, status, pdfPath = null, errorMessage = null) {
+      const { error } = await supabase.from('conversion_history').insert({
+        original_filename: file.name,
+        file_type: file.name.split('.').pop().toLowerCase(),
+        file_size_bytes: file.size,
+        status,
+        error_message: errorMessage,
+        pdf_path: pdfPath
+      });
+
+      if (error) {
+        console.error('History save failed:', error.message);
+      }
+    }
+
+    async function openSignedPdf(pdfPath) {
+      const { data, error } = await supabase
+        .storage
+        .from('generated-pdfs')
+        .createSignedUrl(pdfPath, 60);
+
+      if (error) {
+        alert(`Could not create download link: ${error.message}`);
         return;
       }
 
-      const res = await fetch(`${API_BASE}/create-billing-portal`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
+      window.open(data.signedUrl, '_blank');
+    }
+
+    function renderHistory(rows) {
+      if (!rows || rows.length === 0) {
+        historyList.innerHTML = `<div class="message muted">No history yet.</div>`;
+        return;
+      }
+
+      historyList.innerHTML = rows.map((row) => {
+        const statusClass =
+          row.status === 'success' ? 'history-status-success' : 'history-status-failed';
+
+        const noteLabel = row.status === 'success' ? 'Note' : 'Error';
+        const errorLine = row.error_message
+          ? `<div><strong>${noteLabel}:</strong> ${escapeHtml(row.error_message)}</div>`
+          : '';
+
+        const createdAt = new Date(row.created_at).toLocaleString();
+
+        const downloadButton = row.pdf_path
+          ? `<button class="btn btn-download" data-pdf-path="${escapeHtml(row.pdf_path)}">Download PDF</button>`
+          : '';
+
+        return `
+          <div class="history-item">
+            <strong>${escapeHtml(row.original_filename)}</strong>
+            <div class="history-meta">
+              <div><strong>Type:</strong> .${escapeHtml(row.file_type)}</div>
+              <div><strong>Size:</strong> ${formatFileSize(row.file_size_bytes)}</div>
+              <div><strong>Status:</strong> <span class="${statusClass}">${escapeHtml(row.status)}</span></div>
+              <div><strong>Created:</strong> ${escapeHtml(createdAt)}</div>
+              ${errorLine}
+            </div>
+            ${downloadButton}
+          </div>
+        `;
+      }).join('');
+
+      historyList.querySelectorAll('[data-pdf-path]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          openSignedPdf(btn.getAttribute('data-pdf-path'));
+        });
       });
+    }
 
-      const data = await res.json();
+    async function loadHistory() {
+      const { data, error } = await supabase
+        .from('conversion_history')
+        .select('id, original_filename, file_type, file_size_bytes, status, error_message, pdf_path, created_at')
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert(data.detail || data.error || "Billing portal error");
+      if (error) {
+        historyList.innerHTML = `<div class="message error">Could not load history.</div>`;
+        console.error(error.message);
+        return;
+      }
+
+      renderHistory(data);
+    }
+
+    async function convertFileToPdf() {
+      const result = validateSelectedFile();
+      if (!result.ok) return;
+
+      if (!RAILWAY_API_BASE) {
+        uploadMessage.textContent = 'Railway API URL is missing in dashboard.html.';
+        uploadMessage.className = 'message error';
+        return;
+      }
+
+      const file = result.file;
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        convertBtn.disabled = true;
+        uploadMessage.textContent = 'Converting file to PDF...';
+        uploadMessage.className = 'message muted';
+
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session?.access_token) {
+          throw new Error('Please log in again.');
+        }
+
+        const response = await fetch(`${RAILWAY_API_BASE}/convert-txt`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          let errorText = 'Conversion failed.';
+          try {
+            const errorData = await response.json();
+            errorText = errorData.detail || errorData.error || errorText;
+          } catch (_) {}
+          throw new Error(errorText);
+        }
+
+        const blob = await response.blob();
+
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
+        link.href = downloadUrl;
+        link.download = `${baseName}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+
+        const uploadResult = await uploadPdfToStorage(blob, file.name);
+
+        await saveHistoryRow(
+          file,
+          'success',
+          uploadResult.ok ? uploadResult.path : null,
+          uploadResult.tooLarge ? uploadResult.message : null
+        );
+
+        await loadHistory();
+
+        if (uploadResult.tooLarge) {
+          uploadMessage.textContent = uploadResult.message;
+          uploadMessage.className = 'message success';
+        } else {
+          uploadMessage.textContent = 'PDF generated successfully. Download started and saved to history.';
+          uploadMessage.className = 'message success';
+        }
+      } catch (err) {
+        await saveHistoryRow(file, 'failed', null, err.message || 'Something went wrong during conversion.');
+        await loadHistory();
+
+        uploadMessage.textContent = err.message || 'Something went wrong during conversion.';
+        uploadMessage.className = 'message error';
+      } finally {
+        convertBtn.disabled = false;
       }
     }
 
-    loadUsage();
+    logoutBtn.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    });
+
+    checkBtn.addEventListener('click', validateSelectedFile);
+    convertBtn.addEventListener('click', convertFileToPdf);
+    clearBtn.addEventListener('click', resetFileView);
+
+    chatFile.addEventListener('change', () => {
+      uploadMessage.textContent = 'File selected. Click "Validate File".';
+      uploadMessage.className = 'message muted';
+    });
+
+    loadUser();
   </script>
 </body>
 </html>
