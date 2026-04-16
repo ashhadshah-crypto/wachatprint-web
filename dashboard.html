@@ -217,6 +217,38 @@
       return data;
     }
 
+    async function verifyCheckoutIfNeeded() {
+      const params = new URLSearchParams(window.location.search);
+      const billing = params.get('billing');
+      const sessionId = params.get('session_id');
+
+      if (billing === 'success' && sessionId) {
+        try {
+          planMessage.textContent = 'Verifying payment...';
+          planMessage.className = 'message muted';
+
+          await apiFetch('/verify-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId })
+          });
+
+          const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+          window.history.replaceState({}, document.title, cleanUrl);
+        } catch (err) {
+          planMessage.textContent = err.message || 'Payment verification failed.';
+          planMessage.className = 'message error';
+        }
+      }
+
+      if (billing === 'cancel') {
+        planMessage.textContent = 'Checkout was canceled.';
+        planMessage.className = 'message error';
+        const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
+
     function resetFileView() {
       chatFile.value = '';
       fileInfo.style.display = 'none';
@@ -447,6 +479,7 @@
       }
       currentUser = data.user;
       userEmail.textContent = `Logged in as: ${data.user.email}`;
+      await verifyCheckoutIfNeeded();
       await Promise.all([loadPlanSummary(), loadHistory()]);
     }
 
