@@ -48,6 +48,11 @@
     .history-meta { font-size: 13px; color: #475569; line-height: 1.8; }
     .history-status-success { color: #15803d; font-weight: 700; }
     .history-status-failed { color: #dc2626; font-weight: 700; }
+    .export-options { display: grid; gap: 10px; margin-top: 16px; }
+    .export-option { border: 1px solid #dbe2ea; border-radius: 12px; padding: 14px; background: white; cursor: pointer; display: flex; gap: 12px; align-items: flex-start; }
+    .export-option input { margin-top: 3px; }
+    .export-title { font-weight: 700; color: #0f172a; }
+    .export-desc { font-size: 13px; color: #64748b; margin-top: 4px; line-height: 1.5; }
     @media (max-width: 920px) { .grid { grid-template-columns: 1fr; } .plan-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -100,7 +105,7 @@
 
       <div class="card">
         <h2>How it works</h2>
-        <p>Upload your WhatsApp export file and convert it to PDF. Your plan controls the file size limit and daily conversion count.</p>
+        <p>Upload your WhatsApp export file and choose the output style that fits your use case.</p>
         <div class="note" style="margin-top:16px;">
           Free plan: 5 MB and 2 conversions per 24 hours<br />
           Pro plan: 50 MB and 50 conversions per 24 hours<br />
@@ -110,18 +115,45 @@
     </div>
 
     <div class="card">
-      <h2>Convert WhatsApp Export to PDF</h2>
+      <h2>Convert WhatsApp Export</h2>
       <p>Upload your exported WhatsApp chat file. Direct conversion works for <strong>.txt</strong> and <strong>.zip</strong> files.</p>
 
       <div class="upload-box">
         <label for="chatFile"><strong>Select file</strong></label>
         <input type="file" id="chatFile" accept=".zip,.txt" />
         <div class="note">Final file size and usage checks are enforced on the server based on your plan.</div>
+
+        <div class="export-options">
+          <label class="export-option">
+            <input type="radio" name="exportType" value="html_zip" checked />
+            <div>
+              <div class="export-title">HTML ZIP</div>
+              <div class="export-desc">Recommended experience. Open chat in browser with media in place.</div>
+            </div>
+          </label>
+
+          <label class="export-option">
+            <input type="radio" name="exportType" value="pdf_media_zip" />
+            <div>
+              <div class="export-title">PDF + Media ZIP</div>
+              <div class="export-desc">Record copy with PDF plus included files in one ZIP.</div>
+            </div>
+          </label>
+
+          <label class="export-option">
+            <input type="radio" name="exportType" value="pdf_only" />
+            <div>
+              <div class="export-title">PDF Only</div>
+              <div class="export-desc">Simple shareable output with just the PDF.</div>
+            </div>
+          </label>
+        </div>
+
         <div class="file-info" id="fileInfo"></div>
 
         <div class="actions">
           <button class="btn" id="checkBtn" type="button">Validate File</button>
-          <button class="btn" id="convertBtn" type="button">Convert to PDF</button>
+          <button class="btn" id="convertBtn" type="button">Generate Output</button>
           <button class="btn btn-secondary" id="clearBtn" type="button">Clear</button>
         </div>
 
@@ -173,6 +205,25 @@
     let currentPlanData = null;
     let autoSyncTimer = null;
 
+    function getSelectedExportType() {
+      const selected = document.querySelector('input[name="exportType"]:checked');
+      return selected ? selected.value : 'html_zip';
+    }
+
+    function endpointForExportType(exportType) {
+      if (exportType === 'pdf_only') return '/export/pdf-only';
+      if (exportType === 'pdf_media_zip') return '/export/pdf-media-zip';
+      return '/export/html-zip';
+    }
+
+    function labelForHistory(path) {
+      if (!path) return 'Download Output';
+      const lower = path.toLowerCase();
+      if (lower.endsWith('.pdf')) return 'Download PDF';
+      if (lower.endsWith('.zip')) return 'Download ZIP';
+      return 'Download Output';
+    }
+
     function formatFileSize(bytes) {
       if (bytes < 1024) return `${bytes} bytes`;
       if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
@@ -202,7 +253,6 @@
 
       let data = null;
       try { data = await res.json(); } catch (_) {}
-
       if (!res.ok) throw new Error(data?.detail || data?.error || 'Request failed');
       return data;
     }
@@ -216,13 +266,11 @@
         try {
           planMessage.textContent = 'Verifying payment...';
           planMessage.className = 'message muted';
-
           await apiFetch('/verify-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ session_id: sessionId })
           });
-
           const cleanUrl = `${window.location.origin}${window.location.pathname}`;
           window.history.replaceState({}, document.title, cleanUrl);
         } catch (err) {
@@ -240,9 +288,7 @@
     }
 
     async function syncPlanSilently() {
-      try {
-        await apiFetch('/refresh-subscription', { method: 'POST' });
-      } catch (_) {}
+      try { await apiFetch('/refresh-subscription', { method: 'POST' }); } catch (_) {}
     }
 
     function startAutoPlanSync() {
@@ -275,7 +321,6 @@
       }
 
       const extension = file.name.split('.').pop().toLowerCase();
-
       if (!ALLOWED_EXTENSIONS.includes(extension)) {
         uploadMessage.textContent = 'Invalid file type. Please upload only .zip or .txt files.';
         uploadMessage.className = 'message error';
@@ -291,56 +336,55 @@
         return { ok: false };
       }
 
-      let planLimitNote = 'Server will apply your plan limits.';
-      if (currentPlanData?.max_file_size_mb) {
-        planLimitNote = `Your current plan limit: ${currentPlanData.max_file_size_mb} MB`;
-      }
+      const exportType = getSelectedExportType();
+      const exportLabel = exportType === 'pdf_only' ? 'PDF Only' : exportType === 'pdf_media_zip' ? 'PDF + Media ZIP' : 'HTML ZIP';
+      const planLimitNote = currentPlanData?.max_file_size_mb ? `Your current plan limit: ${currentPlanData.max_file_size_mb} MB` : 'Server will apply your plan limits.';
 
       fileInfo.style.display = 'block';
-      fileInfo.innerHTML = `<strong>Selected File:</strong> ${escapeHtml(file.name)}<br><strong>Type:</strong> .${escapeHtml(extension)}<br><strong>Size:</strong> ${formatFileSize(file.size)}<br><strong>Status:</strong> Valid<br><strong>Plan Check:</strong> ${escapeHtml(planLimitNote)}`;
-      uploadMessage.textContent = 'File looks good. Click Convert to PDF.';
+      fileInfo.innerHTML = `<strong>Selected File:</strong> ${escapeHtml(file.name)}<br><strong>Type:</strong> .${escapeHtml(extension)}<br><strong>Size:</strong> ${formatFileSize(file.size)}<br><strong>Output:</strong> ${escapeHtml(exportLabel)}<br><strong>Plan Check:</strong> ${escapeHtml(planLimitNote)}`;
+      uploadMessage.textContent = 'File looks good. Click Generate Output.';
       uploadMessage.className = 'message success';
-      return { ok: true, extension, file };
+      return { ok: true, file, exportType };
     }
 
-    async function uploadPdfToStorage(blob, originalFileName) {
+    async function uploadArtifactToStorage(blob, originalFileName, outputExt, contentType) {
       if (!currentUser) throw new Error('User session not found.');
 
       const baseName = originalFileName.replace(/\.[^/.]+$/, '');
       const safeBaseName = baseName.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const pdfFileName = `${Date.now()}-${safeBaseName}.pdf`;
-      const pdfPath = `${currentUser.id}/${pdfFileName}`;
+      const fileName = `${Date.now()}-${safeBaseName}.${outputExt}`;
+      const filePath = `${currentUser.id}/${fileName}`;
 
-      const { data, error } = await supabase.storage.from('generated-pdfs').upload(pdfPath, blob, {
-        contentType: 'application/pdf',
+      const { data, error } = await supabase.storage.from('generated-pdfs').upload(filePath, blob, {
+        contentType,
         upsert: false
       });
 
       if (error) {
         const msg = (error.message || '').toLowerCase();
         if (msg.includes('maximum allowed size') || msg.includes('object exceeded') || msg.includes('payload too large') || msg.includes('entity too large')) {
-          return { ok: false, tooLarge: true, path: null, message: 'PDF was generated and downloaded, but it was too large to save in history.' };
+          return { ok: false, tooLarge: true, path: null, message: 'Output was generated and downloaded, but it was too large to save in history.' };
         }
-        throw new Error(`PDF upload failed: ${error.message}`);
+        throw new Error(`Output upload failed: ${error.message}`);
       }
 
       return { ok: true, tooLarge: false, path: data.path, message: null };
     }
 
-    async function saveHistoryRow(file, status, pdfPath = null, errorMessage = null) {
+    async function saveHistoryRow(file, status, outputPath = null, errorMessage = null) {
       const { error } = await supabase.from('conversion_history').insert({
         original_filename: file.name,
         file_type: file.name.split('.').pop().toLowerCase(),
         file_size_bytes: file.size,
         status,
         error_message: errorMessage,
-        pdf_path: pdfPath
+        pdf_path: outputPath
       });
       if (error) console.error('History save failed:', error.message);
     }
 
-    async function openSignedPdf(pdfPath) {
-      const { data, error } = await supabase.storage.from('generated-pdfs').createSignedUrl(pdfPath, 60);
+    async function openSignedOutput(path) {
+      const { data, error } = await supabase.storage.from('generated-pdfs').createSignedUrl(path, 60);
       if (error) {
         alert(`Could not create download link: ${error.message}`);
         return;
@@ -359,13 +403,13 @@
         const noteLabel = row.status === 'success' ? 'Note' : 'Error';
         const errorLine = row.error_message ? `<div><strong>${noteLabel}:</strong> ${escapeHtml(row.error_message)}</div>` : '';
         const createdAt = new Date(row.created_at).toLocaleString();
-        const downloadButton = row.pdf_path ? `<button class="btn btn-green" data-pdf-path="${escapeHtml(row.pdf_path)}" style="margin-top:10px;">Download PDF</button>` : '';
+        const downloadButton = row.pdf_path ? `<button class="btn btn-green" data-output-path="${escapeHtml(row.pdf_path)}" style="margin-top:10px;">${escapeHtml(labelForHistory(row.pdf_path))}</button>` : '';
 
         return `<div class="history-item"><strong>${escapeHtml(row.original_filename)}</strong><div class="history-meta"><div><strong>Type:</strong> .${escapeHtml(row.file_type)}</div><div><strong>Size:</strong> ${formatFileSize(row.file_size_bytes)}</div><div><strong>Status:</strong> <span class="${statusClass}">${escapeHtml(row.status)}</span></div><div><strong>Created:</strong> ${escapeHtml(createdAt)}</div>${errorLine}</div>${downloadButton}</div>`;
       }).join('');
 
-      historyList.querySelectorAll('[data-pdf-path]').forEach((btn) => {
-        btn.addEventListener('click', () => openSignedPdf(btn.getAttribute('data-pdf-path')));
+      historyList.querySelectorAll('[data-output-path]').forEach((btn) => {
+        btn.addEventListener('click', () => openSignedOutput(btn.getAttribute('data-output-path')));
       });
     }
 
@@ -425,7 +469,6 @@
         }
         const data = await apiFetch('/usage-summary');
         renderPlan(data);
-
         const remaining = Math.max((data.remaining_conversions ?? 0), 0);
         planMessage.textContent = `Plan synced automatically. ${remaining} conversions remaining in the last 24-hour window.`;
         planMessage.className = 'message success';
@@ -475,37 +518,41 @@
       }
       currentUser = data.user;
       userEmail.textContent = `Logged in as: ${data.user.email}`;
-
       await verifyCheckoutIfNeeded();
       await syncPlanSilently();
       await Promise.all([loadPlanSummary(false), loadHistory()]);
       startAutoPlanSync();
     }
 
-    async function convertFileToPdf() {
+    async function generateOutput() {
       const result = validateSelectedFile();
       if (!result.ok) return;
 
       const file = result.file;
+      const exportType = result.exportType;
+      const endpoint = endpointForExportType(exportType);
+      const outputExt = exportType === 'pdf_only' ? 'pdf' : 'zip';
+      const contentType = exportType === 'pdf_only' ? 'application/pdf' : 'application/zip';
+
       const formData = new FormData();
       formData.append('file', file);
 
       try {
         convertBtn.disabled = true;
-        uploadMessage.textContent = 'Converting file to PDF...';
+        uploadMessage.textContent = 'Generating output...';
         uploadMessage.className = 'message muted';
 
         const token = await getAccessToken();
         if (!token) throw new Error('Please log in again.');
 
-        const response = await fetch(`${API_BASE}/convert-txt`, {
+        const response = await fetch(`${API_BASE}${endpoint}`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           body: formData
         });
 
         if (!response.ok) {
-          let errorText = 'Conversion failed.';
+          let errorText = 'Output generation failed.';
           try {
             const errorData = await response.json();
             errorText = errorData.detail || errorData.error || errorText;
@@ -517,30 +564,26 @@
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         const baseName = file.name.replace(/\.[^/.]+$/, '');
+        const suffix = exportType === 'html_zip' ? '-html' : exportType === 'pdf_media_zip' ? '-pdf-media' : '';
         link.href = downloadUrl;
-        link.download = `${baseName}.pdf`;
+        link.download = `${baseName}${suffix}.${outputExt}`;
         document.body.appendChild(link);
         link.click();
         link.remove();
         window.URL.revokeObjectURL(downloadUrl);
 
-        const uploadResult = await uploadPdfToStorage(blob, file.name);
+        const uploadResult = await uploadArtifactToStorage(blob, file.name, outputExt, contentType);
 
         await saveHistoryRow(file, 'success', uploadResult.ok ? uploadResult.path : null, uploadResult.tooLarge ? uploadResult.message : null);
         await syncPlanSilently();
         await Promise.all([loadHistory(), loadPlanSummary(false)]);
 
-        if (uploadResult.tooLarge) {
-          uploadMessage.textContent = uploadResult.message;
-          uploadMessage.className = 'message success';
-        } else {
-          uploadMessage.textContent = 'PDF generated successfully. Download started and saved to history.';
-          uploadMessage.className = 'message success';
-        }
+        uploadMessage.textContent = uploadResult.tooLarge ? uploadResult.message : 'Output generated successfully. Download started and saved to history.';
+        uploadMessage.className = 'message success';
       } catch (err) {
-        await saveHistoryRow(file, 'failed', null, err.message || 'Something went wrong during conversion.');
+        await saveHistoryRow(file, 'failed', null, err.message || 'Something went wrong during output generation.');
         await Promise.all([loadHistory(), loadPlanSummary(false)]);
-        uploadMessage.textContent = err.message || 'Something went wrong during conversion.';
+        uploadMessage.textContent = err.message || 'Something went wrong during output generation.';
         uploadMessage.className = 'message error';
       } finally {
         convertBtn.disabled = false;
@@ -563,11 +606,17 @@
     upgradeBtn.addEventListener('click', startCheckout);
     billingBtn.addEventListener('click', openBillingPortal);
     checkBtn.addEventListener('click', validateSelectedFile);
-    convertBtn.addEventListener('click', convertFileToPdf);
+    convertBtn.addEventListener('click', generateOutput);
     clearBtn.addEventListener('click', resetFileView);
 
+    document.querySelectorAll('input[name="exportType"]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        if (chatFile.files.length) validateSelectedFile();
+      });
+    });
+
     chatFile.addEventListener('change', () => {
-      uploadMessage.textContent = 'File selected. Click Validate File.';
+      uploadMessage.textContent = 'File selected. Choose output type and click Validate File.';
       uploadMessage.className = 'message muted';
     });
 
